@@ -1,4 +1,4 @@
-import { requireCoordinator, getAIClient } from "@/lib/ai";
+import { requireCoordinator, getAIClient, checkAndIncrementAI } from "@/lib/ai";
 import { NextRequest } from "next/server";
 
 export interface ProcessedNotes {
@@ -22,11 +22,20 @@ export async function POST(req: NextRequest) {
   const auth = await requireCoordinator(req);
   if (auth instanceof Response) return auth;
 
-  const body = await req.json();
+  const rawBody = await req.text();
+  if (rawBody.length > 100_000) {
+    return Response.json({ error: "Verzoek te groot" }, { status: 413 });
+  }
+  const body = JSON.parse(rawBody);
   const { notes, projectContext } = body;
 
   if (!notes?.trim()) {
     return Response.json({ error: "Geen gespreksverslag" }, { status: 400 });
+  }
+
+  const rate = await checkAndIncrementAI(auth.workspaceId);
+  if (!rate.allowed) {
+    return Response.json({ error: "Maandlimiet voor AI-calls bereikt (500/maand)." }, { status: 429 });
   }
 
   try {
@@ -60,7 +69,7 @@ Maak alleen tasks_to_create als er expliciet actiepunten zijn benoemd.
 Maak status_updates alleen als er duidelijke voortgang of statuswijzigingen zijn besproken.`;
 
     const message = await client.messages.create({
-      model: "claude-sonnet-4-5-20251001",
+      model: "claude-sonnet-4-6",
       max_tokens: 2000,
       system: systemPrompt,
       messages: [{

@@ -23,12 +23,33 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-
   const path = request.nextUrl.pathname;
 
+  // Subdomain routing: cert-os.nl = marketing, app.cert-os.nl = app
+  const host = request.headers.get("host") ?? "";
+  const isLocalDev = host.includes("localhost") || host.includes("127.0.0.1");
+  const isAppDomain = isLocalDev || host.startsWith("app.");
+
+  if (!isAppDomain) {
+    // Marketing domain: pass through /, auth/*, api/*, static, legal pages
+    const marketingPassPaths = [
+      "/auth/", "/api/", "/_next/",
+      "/privacy", "/voorwaarden", "/verwerkersovereenkomst", "/cookies",
+    ];
+    if (path === "/" || marketingPassPaths.some(p => path.startsWith(p))) {
+      return supabaseResponse;
+    }
+    // All other paths (e.g. /dashboard) → redirect to app.cert-os.nl
+    const appUrl = request.nextUrl.clone();
+    appUrl.host = "app.cert-os.nl";
+    return NextResponse.redirect(appUrl);
+  }
+
+  // App domain: run auth logic
+  const { data: { user } } = await supabase.auth.getUser();
+
   // Publieke routes — geen auth vereist
-  const publicPaths = ["/", "/auth/login", "/auth/callback", "/auth/error"];
+  const publicPaths = ["/auth/login", "/auth/callback", "/auth/error"];
   if (publicPaths.some(p => path === p || path.startsWith("/auth/"))) {
     return supabaseResponse;
   }
