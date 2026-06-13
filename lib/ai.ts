@@ -4,7 +4,7 @@ export function getAIClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 }
 
-export async function requireCoordinator(request: Request): Promise<{ userId: string; workspaceId: string } | Response> {
+export async function requireCoordinator(_request: Request): Promise<{ userId: string; workspaceId: string } | Response> {
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
 
@@ -18,10 +18,15 @@ export async function requireCoordinator(request: Request): Promise<{ userId: st
     return new Response(JSON.stringify({ error: "Geen toegang" }), { status: 403 });
   }
 
-  const { data: workspace } = await supabase.from("workspaces").select("id").limit(1).single();
-  if (!workspace) {
+  const { data: member } = await supabase
+    .from("workspace_members")
+    .select("workspace_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .single();
+  if (!member) {
     return new Response(JSON.stringify({ error: "Geen workspace" }), { status: 404 });
   }
 
-  return { userId: user.id, workspaceId: workspace.id };
+  return { userId: user.id, workspaceId: member.workspace_id };
 }

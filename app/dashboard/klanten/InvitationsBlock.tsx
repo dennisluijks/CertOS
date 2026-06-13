@@ -63,9 +63,12 @@ export default function InvitationsBlock({ tenantId, workspaceId }: Props) {
         email: email.trim(),
       });
       if (!error) {
-        setMsg("Uitnodiging aangemaakt. Stuur de persoon de link naar https://certos.app/auth/login");
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cert-os.nl";
+        setMsg(`Uitnodiging aangemaakt. Stuur de persoon de link naar ${appUrl}/auth/login`);
         const { data: newInv } = await supabase.from("invitations").select("*").eq("tenant_id", tenantId).eq("email", email.trim()).eq("status", "open").single();
         if (newInv) setInvitations(prev => [...prev, newInv]);
+      } else if (error.code === "23505") {
+        setMsg("Er is al een openstaande uitnodiging voor dit e-mailadres.");
       } else {
         setMsg("Er ging iets mis: " + error.message);
       }

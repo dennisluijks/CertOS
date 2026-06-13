@@ -30,6 +30,10 @@ export default function DocumentenClient({ documents: initialDocs, projectMap, t
       alert("Plak eerst een link naar het document (bijv. SharePoint of Google Drive).");
       return;
     }
+    try { new URL(link); } catch {
+      alert("Vul een geldige URL in (moet beginnen met https://).");
+      return;
+    }
     setSaving(docId);
     const { error } = await supabase
       .from("documents")
