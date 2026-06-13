@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CertOS
 
-## Getting Started
+Multi-tenant SaaS voor certificeringsbeheer. Coördinerende consultants begeleiden klanten naar VCU-, ISO- en ISAE 3402-certificeringen. Inclusief klantportaal met taakopdracht en documentaanlevering.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router), TypeScript, Tailwind CSS v4
+- Supabase: Postgres, Auth (Google OAuth), Row Level Security
+- Vercel deploy-target
+- Anthropic API (server-side only)
+
+---
+
+## Stap 1 — Supabase opzetten
+
+1. Maak een nieuw project op [app.supabase.com](https://app.supabase.com)
+2. Ga naar **Authentication → Providers → Google**
+3. Voeg Google OAuth toe:
+   - Maak een project in [Google Cloud Console](https://console.cloud.google.com)
+   - Maak OAuth 2.0-credentials aan
+   - Zet bij Authorized redirect URIs: `https://<supabase-ref>.supabase.co/auth/v1/callback`
+   - Kopieer Client ID en Secret naar Supabase
+4. Ga naar **Authentication → URL Configuration**:
+   - Site URL: `https://jouw-vercel-domein.vercel.app`
+   - Redirect URLs: `https://jouw-vercel-domein.vercel.app/auth/callback`
+
+## Stap 2 — Migraties uitvoeren
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Via Supabase SQL Editor (aanbevolen voor eerste keer)
+# Voer deze bestanden in volgorde uit:
+# 1. supabase/migrations/001_initial_schema.sql
+# 2. supabase/migrations/002_rls_helpers.sql
+# 3. supabase/migrations/003_triggers.sql
+
+# Of met Supabase CLI:
+npx supabase db push
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Stap 3 — Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+# Vul de waarden in uit je Supabase-project en Anthropic Console
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Stap 4 — Lokaal starten
 
-## Learn More
+```bash
+npm install
+npm run dev
+# Open http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Stap 5 — Vercel deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Zet environment variables via Vercel dashboard of CLI:
+vercel env add NEXT_PUBLIC_SUPABASE_URL
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
+vercel env add SUPABASE_SERVICE_ROLE_KEY
+vercel env add ANTHROPIC_API_KEY
+# NOOIT: NEXT_PUBLIC_ prefix op ANTHROPIC_API_KEY of SUPABASE_SERVICE_ROLE_KEY
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+vercel deploy --prod
+```
 
-## Deploy on Vercel
+## Stap 6 — Seed-data aanmaken
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Na de eerste login als coordinator:
+1. Maak een workspace aan (onboarding)
+2. Ga naar Supabase SQL Editor
+3. Voer `supabase/seed.sql` uit — dit maakt demo-tenant ENGR B.V. met VCU-traject aan
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Een klantgebruiker uitnodigen en testen
+
+1. Log in als coordinator
+2. Ga naar **Klanten**
+3. Klik op "Portaaltoegang" bij een klant
+4. Vul een e-mailadres in en klik "Uitnodigen"
+5. Log in met dat e-mailadres via Google → automatische redirect naar `/portal`
+
+De klant ziet:
+- Overzicht: voortgangskaarten per traject
+- Mijn taken: toegewezen taken met afvinkmogelijkheid en reactiefunctie
+- Documenten: documenten aanleveren via link
+
+## RLS-tests uitvoeren
+
+Zie `supabase/tests/rls_tests.sql` voor testscenario's.
+
+Verificeer handmatig:
+- Log in als Coordinator B → geen data van Coordinator A zichtbaar
+- Log in als client → geen uren, risico's of interne logboekregels zichtbaar
+- Client update niet-eigen taak → 0 rijen gewijzigd (RLS blokkeert)
+
+## Projectstructuur
+
+```
+app/
+  auth/          — Login, callback, onboarding, error
+  dashboard/     — Coordinator interface
+    klanten/     — Klantbeheer + portaaltoegang
+    trajecten/   — Projectdetail met alle tabs
+    normwijzer/  — Kennislaag per norm
+    actiecentrum/ — Open acties + klantactiviteit
+    week/        — Mijn week
+    backup/      — JSON-export
+    instellingen/ — Workspace-instellingen
+  portal/        — Klantportaal
+    taken/       — Mijn taken (afvinkbaar)
+    documenten/  — Documenten aanleveren
+  api/ai/        — Server-side AI-routes (coordinator only)
+lib/
+  supabase/      — Server/client/middleware helpers
+  norms.ts       — Alle normdata (VCU, ISO, ISAE)
+  ai.ts          — AI-client helper
+supabase/
+  migrations/    — Database schema + RLS + triggers
+  tests/         — RLS-testscripts
+  seed.sql       — Demo-data
+types/
+  database.ts    — Supabase TypeScript types
+```
+
+## Merkbelofte
+
+"Jij coordineert, CertOS weet."

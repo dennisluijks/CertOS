@@ -1,26 +1,110 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ============================================================
+   CertOS Brand tokens — Tailwind v4 @theme
+   ============================================================ */
+
+@theme {
+  /* Fonts */
+  --font-archivo: "Archivo", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  /* Brand colors */
+  --color-navy:      #16294F;
+  --color-ink:       #0F1B33;
+  --color-bone:      #F5F6F2;
+  --color-paper:     #FFFFFF;
+  --color-slate:     #56688A;
+  --color-line:      #DCDFE6;
+  --color-navy-tint: #E8EDF6;
+  --color-green:     #21A865;
+  --color-green-tint:#E2F4EA;
+  --color-amber:     #C2881D;
+  --color-red:       #B23A2E;
+  --color-sky:       #3B7CB8;
+  --color-grey:      #9AA3B0;
+
+  /* Radius */
+  --radius-stamp: 4px;
+  --radius-card:  9px;
+  --radius-modal: 12px;
+
+  /* Shorthand for status colors (used in JS too, keep in sync) */
+  --color-status-0: var(--color-grey);
+  --color-status-1: var(--color-amber);
+  --color-status-2: var(--color-sky);
+  --color-status-3: var(--color-green);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ============================================================
+   Global base styles
+   ============================================================ */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-archivo);
+  background: var(--color-bone);
+  color: var(--color-ink);
+  line-height: 1.55;
+  min-height: 100%;
 }
+
+/* Inputs & selects */
+input, select, textarea {
+  font-family: var(--font-archivo);
+  font-size: 13.5px;
+  border: 1px solid var(--color-line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--color-ink);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--color-green);
+  outline-offset: -1px;
+}
+
+/* Mono stamp utility */
+.stamp {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 4px;
+  border: 1.5px solid currentColor;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Progress bar */
+.bar {
+  height: 7px;
+  background: #E7E8E0;
+  border-radius: 4px;
+  overflow: hidden;
+  flex: 1;
+}
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-green);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+/* Spinner */
+.spin {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  vertical-align: -2px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
