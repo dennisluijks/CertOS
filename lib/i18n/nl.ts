@@ -1,14 +1,23 @@
 export const nl = {
   nav: {
     login: "Inloggen",
-    start: "Start gratis",
+    start: "Begin gratis",
+    dashboard: "Dashboard",
+    actiecentrum: "Actiecentrum",
+    week: "Mijn week",
+    klanten: "Klanten",
+    normwijzer: "Normwijzer",
+    nieuw: "Nieuw traject",
+    backup: "Back-up",
+    instellingen: "Instellingen",
+    uitloggen: "Uitloggen",
   },
   hero: {
-    headline: "Begeleid bedrijven naar hun certificering. Zonder zelf de norm uit je hoofd te kennen.",
-    sub: "CertOS is het werkstation voor certificeringscoördinatoren: VCU, ISO en ISAE 3402 trajecten met ingebouwde normkennis, klantportaal en auditmodus.",
-    cta_primary: "Start gratis met 1 klant",
+    headline: "Houd de regie over elk certificeringstraject. Zonder elke norm uit je hoofd te kennen.",
+    sub: "CertOS bundelt trajecten, normkennis, klantportaal en auditmodus in één overzicht. Voor de externe coordinator én de interne kwaliteitsmanager.",
+    cta_primary: "Begin gratis",
     cta_secondary: "Bekijk de demo",
-    microcopy: "Geen creditcard nodig. Inloggen met Google.",
+    trust: ["Gratis te starten", "Data in de EU", "Geen installatie"],
   },
   trust: {
     label: "Ondersteunde normen",
@@ -41,7 +50,7 @@ export const nl = {
       {
         tag: "KLANTPORTAAL",
         title: "Klant levert zelf aan",
-        body: "Jouw klant ziet voortgang en levert documenten zelf aan. Jouw huisstijl, jouw naam.",
+        body: "Jouw klant of collega ziet voortgang en levert documenten zelf aan. Jouw huisstijl, jouw naam.",
       },
       {
         tag: "AUDITMODUS",
@@ -53,9 +62,9 @@ export const nl = {
   how: {
     title: "Zo werkt het",
     steps: [
-      { num: "1", title: "Klant aanmaken", body: "Voeg een klant toe en stel het portaal in met hun naam en huisstijl." },
+      { num: "1", title: "Klant of afdeling toevoegen", body: "Voeg een klant of interne afdeling toe en stel het portaal in met hun naam en huisstijl." },
       { num: "2", title: "Norm kiezen", body: "Kies VCU, ISO 9001, 14001, 27001, 45001 of ISAE 3402. Fasen en maatregelen staan klaar." },
-      { num: "3", title: "Checklist importeren", body: "Plak een gespreksverslag en de AI maakt taken aan, werkt statussen bij en schrijft het logboek." },
+      { num: "3", title: "AI verwerkt het overleg", body: "Plak een gespreksverslag en de AI maakt taken aan, werkt statussen bij en schrijft het logboek." },
     ],
   },
   pricing: {
@@ -69,35 +78,35 @@ export const nl = {
     most_popular: "Meest gekozen",
     plans: [
       {
-        name: "Solo",
+        name: "Gratis",
         price_month: "0",
         price_year: "0",
         description: "Jouw eerste traject. Gratis, altijd.",
         features: [
-          "1 klant",
+          "1 klant of afdeling",
           "2 actieve trajecten",
           "Kennislaag en normwijzer",
           "10 AI-calls per maand",
           "Auditmodus, Gantt, uren",
         ],
-        cta: "Start gratis",
+        cta: "Begin gratis",
       },
       {
         name: "Pro",
         price_month: "39",
         price_year: "32",
-        description: "Voor de consultant die groeit.",
+        description: "Voor de coordinator die groeit.",
         features: [
           "Onbeperkt klanten",
           "Onbeperkt trajecten",
           "Klantportaal (3 logins per klant)",
           "150 AI-calls per maand",
-          "Alles van Solo",
+          "Alles van Gratis",
         ],
-        cta: "Start Pro",
+        cta: "Aan de slag met Pro",
       },
       {
-        name: "Bureau",
+        name: "Team",
         price_month: "119",
         price_year: "99",
         description: "Voor het team dat serieus schaalt.",
@@ -108,7 +117,7 @@ export const nl = {
           "500 AI-calls per maand",
           "Onbeperkte klantlogins",
         ],
-        cta: "Start Bureau",
+        cta: "Aan de slag met Team",
       },
     ],
   },
@@ -120,16 +129,16 @@ export const nl = {
         a: "Nee. De kennislaag legt per beheersmaatregel uit wat het is, wat de auditor verwacht en welk bewijs je aanlevert.",
       },
       {
-        q: "Vervangt CertOS mijn adviesbureau?",
-        a: "Nee. CertOS coördineert naast het adviesbureau: jij voert de regie, zij leveren de expertise.",
+        q: "Is CertOS ook geschikt voor interne kwaliteitsmanagers?",
+        a: "Ja. CertOS is gebouwd voor iedereen die de regie heeft over een certificeringstraject: externe coordinator, interne QHSE-manager of CISO.",
       },
       {
         q: "Waar staat mijn data?",
         a: "In de EU. Wij gebruiken Supabase en Vercel, beide met EU-datacenters. Subverwerkers: Supabase, Vercel, Stripe, Anthropic.",
       },
       {
-        q: "Kan mijn klant meekijken?",
-        a: "Ja, via het klantportaal. Dat is beschikbaar vanaf het Pro-plan.",
+        q: "Kan mijn klant of collega meekijken?",
+        a: "Ja, via het portaal. Beschikbaar vanaf het Pro-plan.",
       },
       {
         q: "Is er een verwerkersovereenkomst?",
@@ -137,14 +146,14 @@ export const nl = {
       },
       {
         q: "Kan ik opzeggen?",
-        a: "Ja, maandelijks. Bij opzegging ga je aan het einde van de betaalde periode terug naar Solo. Je data blijft staan.",
+        a: "Ja, maandelijks. Bij opzegging ga je aan het einde van de betaalde periode terug naar Gratis. Je data blijft staan.",
       },
     ],
   },
   cta_footer: {
-    title: "Klaar om te beginnen?",
-    sub: "Maak een gratis account aan en voeg je eerste klant toe.",
-    button: "Start gratis met Google",
+    title: "Zet je eerste traject op.",
+    sub: "Maak een account en ga vandaag aan de slag.",
+    button: "Begin gratis",
   },
   footer: {
     tagline: "Jij coordineert, CertOS weet.",

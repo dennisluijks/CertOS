@@ -4,13 +4,22 @@ export const en: Translations = {
   nav: {
     login: "Sign in",
     start: "Start free",
+    dashboard: "Dashboard",
+    actiecentrum: "Action centre",
+    week: "My week",
+    klanten: "Clients",
+    normwijzer: "Norm guide",
+    nieuw: "New project",
+    backup: "Backup",
+    instellingen: "Settings",
+    uitloggen: "Sign out",
   },
   hero: {
-    headline: "Guide companies to certification. Without memorising every standard yourself.",
-    sub: "CertOS is the workstation for certification coordinators: VCU, ISO and ISAE 3402 projects with built-in norm knowledge, client portal and audit mode.",
-    cta_primary: "Start free with 1 client",
+    headline: "Stay in control of every certification project. Without memorising every standard yourself.",
+    sub: "CertOS brings together projects, norm knowledge, client portal and audit mode in one overview. For the external coordinator and the internal quality manager alike.",
+    cta_primary: "Start free",
     cta_secondary: "View the demo",
-    microcopy: "No credit card required. Sign in with Google.",
+    trust: ["Free to start", "Data in the EU", "No installation"],
   },
   trust: {
     label: "Supported standards",
@@ -23,8 +32,8 @@ export const en: Translations = {
         body: "The consultancy checklist in your inbox, evidence on SharePoint, deadlines in your memory.",
       },
       {
-        title: "Client wants a status update",
-        body: "Every week the client asks how things are going and you piece the answer together.",
+        title: "Stakeholder wants a status update",
+        body: "Every week someone asks how things are going and you piece the answer together.",
       },
       {
         title: "The auditor surprises you",
@@ -41,9 +50,9 @@ export const en: Translations = {
         body: "Per control: what it means, what the auditor expects, what evidence to provide and which question to ask internally.",
       },
       {
-        tag: "CLIENT PORTAL",
-        title: "Client delivers themselves",
-        body: "Your client sees progress and submits documents directly. Your branding, your name.",
+        tag: "PORTAL",
+        title: "Client or colleague delivers themselves",
+        body: "Your client or colleague sees progress and submits documents directly. Your branding, your name.",
       },
       {
         tag: "AUDIT MODE",
@@ -55,9 +64,9 @@ export const en: Translations = {
   how: {
     title: "How it works",
     steps: [
-      { num: "1", title: "Add a client", body: "Create a client and set up their portal with their name and brand." },
+      { num: "1", title: "Add a client or department", body: "Create a client or internal department and set up their portal with their name and brand." },
       { num: "2", title: "Choose a standard", body: "Pick VCU, ISO 9001, 14001, 27001, 45001 or ISAE 3402. Phases and controls are ready to go." },
-      { num: "3", title: "Import meeting notes", body: "Paste a meeting transcript and AI creates tasks, updates statuses and writes the log." },
+      { num: "3", title: "AI processes the meeting", body: "Paste a meeting transcript and AI creates tasks, updates statuses and writes the log." },
     ],
   },
   pricing: {
@@ -71,12 +80,12 @@ export const en: Translations = {
     most_popular: "Most popular",
     plans: [
       {
-        name: "Solo",
+        name: "Free",
         price_month: "0",
         price_year: "0",
         description: "Your first project. Free, always.",
         features: [
-          "1 client",
+          "1 client or department",
           "2 active projects",
           "Knowledge layer and norm guide",
           "10 AI calls per month",
@@ -88,29 +97,29 @@ export const en: Translations = {
         name: "Pro",
         price_month: "39",
         price_year: "32",
-        description: "For the consultant who is growing.",
+        description: "For the coordinator who is growing.",
         features: [
           "Unlimited clients",
           "Unlimited projects",
-          "Client portal (3 logins per client)",
+          "Portal (3 logins per client)",
           "150 AI calls per month",
-          "Everything in Solo",
+          "Everything in Free",
         ],
-        cta: "Start Pro",
+        cta: "Get started with Pro",
       },
       {
-        name: "Agency",
+        name: "Team",
         price_month: "119",
         price_year: "99",
         description: "For the team that scales seriously.",
         features: [
           "Everything in Pro, unlimited",
-          "White-label client portal",
+          "White-label portal",
           "Up to 5 coordinators",
           "500 AI calls per month",
-          "Unlimited client logins",
+          "Unlimited portal logins",
         ],
-        cta: "Start Agency",
+        cta: "Get started with Team",
       },
     ],
   },
@@ -122,16 +131,16 @@ export const en: Translations = {
         a: "No. The knowledge layer explains per control what it is, what the auditor expects and what evidence to provide.",
       },
       {
-        q: "Does CertOS replace my consultancy?",
-        a: "No. CertOS coordinates alongside the consultancy: you manage the process, they provide the expertise.",
+        q: "Is CertOS suitable for internal quality managers?",
+        a: "Yes. CertOS is built for anyone coordinating a certification project: external coordinator, internal QHSE manager or CISO.",
       },
       {
         q: "Where is my data stored?",
         a: "In the EU. We use Supabase and Vercel, both with EU data centres. Sub-processors: Supabase, Vercel, Stripe, Anthropic.",
       },
       {
-        q: "Can my client view progress?",
-        a: "Yes, via the client portal. Available from the Pro plan.",
+        q: "Can my client or colleague view progress?",
+        a: "Yes, via the portal. Available from the Pro plan.",
       },
       {
         q: "Is there a data processing agreement?",
@@ -139,14 +148,14 @@ export const en: Translations = {
       },
       {
         q: "Can I cancel?",
-        a: "Yes, monthly. On cancellation you revert to Solo at the end of the paid period. Your data is retained.",
+        a: "Yes, monthly. On cancellation you revert to Free at the end of the paid period. Your data is retained.",
       },
     ],
   },
   cta_footer: {
-    title: "Ready to get started?",
-    sub: "Create a free account and add your first client.",
-    button: "Start free with Google",
+    title: "Set up your first project.",
+    sub: "Create an account and get started today.",
+    button: "Start free",
   },
   footer: {
     tagline: "You coordinate, CertOS knows.",

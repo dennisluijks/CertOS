@@ -104,9 +104,14 @@ export default async function MarketingPage() {
               {t.hero.cta_secondary}
             </a>
           </div>
-          <p style={{ marginTop: 14, fontSize: 12.5, color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}>
-            {t.hero.microcopy.toUpperCase()}
-          </p>
+          <div style={{ marginTop: 20, display: "flex", gap: 20, flexWrap: "wrap" }}>
+            {t.hero.trust.map(badge => (
+              <span key={badge} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
+                <span style={{ color: "var(--color-green)", fontWeight: 700 }}>✓</span>
+                {badge}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
