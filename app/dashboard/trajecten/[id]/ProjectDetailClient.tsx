@@ -206,6 +206,12 @@ function FasenTab({ phases, tasks, project, workspace, tenantContacts, coordinat
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [newTaskName, setNewTaskName] = useState<Record<string, string>>({});
   const [newPhaseName, setNewPhaseName] = useState("");
+  const [ownerMap, setOwnerMap] = useState<Record<string, string>>(
+    () => Object.fromEntries(tasks.map(t => [t.id, t.owner ?? ""]))
+  );
+  useEffect(() => {
+    setOwnerMap(Object.fromEntries(tasks.map(t => [t.id, t.owner ?? ""])));
+  }, [tasks]);
 
   function tasksByPhase(phaseId: string) {
     return tasks.filter(t => t.phase_id === phaseId);
@@ -343,8 +349,11 @@ function FasenTab({ phases, tasks, project, workspace, tenantContacts, coordinat
                       style={{ ...S.input, flex: 1, textDecoration: task.done ? "line-through" : "none", color: task.done ? "var(--color-grey)" : "var(--color-ink)" }}
                     />
                     <select
-                      value={task.owner ?? ""}
-                      onChange={e => updateTask(task.id, { owner: e.target.value })}
+                      value={ownerMap[task.id] ?? ""}
+                      onChange={e => {
+                        setOwnerMap(prev => ({ ...prev, [task.id]: e.target.value }));
+                        updateTask(task.id, { owner: e.target.value });
+                      }}
                       style={{ ...S.input, width: 140 }}
                     >
                       <option value="">— Eigenaar —</option>
