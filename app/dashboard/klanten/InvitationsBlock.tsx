@@ -64,8 +64,15 @@ export default function InvitationsBlock({ tenantId, workspaceId, prefillEmail }
         email: email.trim(),
       });
       if (!error) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cert-os.nl";
-        setMsg(`Uitnodiging aangemaakt. Stuur de persoon de link naar ${appUrl}/auth/login`);
+        // Stuur direct een inloglink via Supabase OTP
+        await supabase.auth.signInWithOtp({
+          email: email.trim(),
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            shouldCreateUser: true,
+          },
+        });
+        setMsg(`Uitnodiging verstuurd naar ${email.trim()}.`);
         const { data: newInv } = await supabase.from("invitations").select("*").eq("tenant_id", tenantId).eq("email", email.trim()).eq("status", "open").single();
         if (newInv) setInvitations(prev => [...prev, newInv]);
       } else if (error.code === "23505") {
