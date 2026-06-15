@@ -46,6 +46,7 @@ interface Props {
   logEntries: LogEntry[];
   expiries: Expiry[];
   tenantMembers: TenantMember[];
+  tenantContacts: TenantContact[];
   coordinatorName: string;
 }
 
@@ -685,11 +686,18 @@ function DocumentenTab({ documents, project, workspace, tenantMembers, onRefresh
 
 // ─── BevindingenTab ───────────────────────────────────────────────────────────
 
-function BevindingenTab({ findings, project, workspace, tenantMembers, coordinatorName, onRefresh }: {
+interface TenantContact {
+  id: string;
+  name: string;
+  email: string | null;
+}
+
+function BevindingenTab({ findings, project, workspace, tenantMembers, tenantContacts, coordinatorName, onRefresh }: {
   findings: Finding[];
   project: Project;
   workspace: { id: string };
   tenantMembers: TenantMember[];
+  tenantContacts: TenantContact[];
   coordinatorName: string;
   onRefresh: () => void;
 }) {
@@ -725,8 +733,26 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, coordinat
     onRefresh();
   }
 
+  const SEVERITY_DEFS = [
+    { label: "Major", bg: "#FDECEA", color: "var(--color-red)", border: "var(--color-red)", desc: "Systematische non-conformiteit — risico voor auditresultaat" },
+    { label: "Minor", bg: "#FEF3E2", color: "var(--color-amber)", border: "var(--color-amber)", desc: "Geïsoleerde afwijking — herstelbaar voor re-audit" },
+    { label: "Observatie", bg: "#EAF4FB", color: "var(--color-sky)", border: "var(--color-sky)", desc: "Verbeterpunt — geen non-conformiteit" },
+  ];
+
   return (
     <div>
+      {/* Definitielegenda */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16, padding: "10px 14px", background: "var(--color-bone)", borderRadius: 8, border: "1px solid var(--color-line)" }}>
+        {SEVERITY_DEFS.map(({ label, bg, color, border, desc }) => (
+          <div key={label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "2px 7px", borderRadius: 4, background: bg, color, border: `1.5px solid ${border}` }}>
+              {label}
+            </span>
+            <span style={{ fontSize: 12, color: "var(--color-slate)" }}>{desc}</span>
+          </div>
+        ))}
+      </div>
+
       {findings.length === 0 && (
         <div style={{ color: "var(--color-slate)", fontSize: 13.5, padding: "12px 0" }}>
           Geen afwijkingen.
@@ -811,12 +837,18 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, coordinat
                   >
                     <option value="">— Kies eigenaar —</option>
                     <option value={coordinatorName}>{coordinatorName} (ik)</option>
-                    {tenantMembers.map(m => {
-                      const name = m.profiles?.full_name ?? m.profiles?.email ?? m.user_id;
-                      return (
-                        <option key={m.user_id} value={name}>{name}</option>
-                      );
-                    })}
+                    {tenantContacts.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}{c.email ? ` (${c.email})` : ""}</option>
+                    ))}
+                    {tenantMembers
+                      .filter(m => {
+                        const email = m.profiles?.email;
+                        return !email || !tenantContacts.some(c => c.email === email);
+                      })
+                      .map(m => {
+                        const name = m.profiles?.full_name ?? m.profiles?.email ?? m.user_id;
+                        return <option key={m.user_id} value={name}>{name} (portaal)</option>;
+                      })}
                   </select>
                 </div>
                 <div>
@@ -1682,6 +1714,7 @@ export default function ProjectDetailClient({
   logEntries: initialLogEntries,
   expiries: _initialExpiries,
   tenantMembers,
+  tenantContacts,
   coordinatorName,
 }: Props) {
   const router = useRouter();
@@ -1870,7 +1903,7 @@ export default function ProjectDetailClient({
         <DocumentenTab documents={documents} project={project} workspace={workspace} tenantMembers={tenantMembers} onRefresh={refreshDocuments} />
       )}
       {activeTab === "afwijkingen" && (
-        <BevindingenTab findings={findings} project={project} workspace={workspace} tenantMembers={tenantMembers} coordinatorName={coordinatorName} onRefresh={refreshFindings} />
+        <BevindingenTab findings={findings} project={project} workspace={workspace} tenantMembers={tenantMembers} tenantContacts={tenantContacts} coordinatorName={coordinatorName} onRefresh={refreshFindings} />
       )}
       {activeTab === "verbeterpunten" && (
         <RisicosTab risks={risks} project={project} workspace={workspace} onRefresh={refreshRisks} />

@@ -32,6 +32,11 @@ export async function POST(req: NextRequest) {
 Analyseer dit certificeringstraject en geef praktisch advies in het Nederlands.
 Geen em dashes. Maximaal 350 woorden.
 
+Instructies voor de analyse:
+- Als de auditdatum binnen 3 maanden ligt: ga er van uit dat de praktijkperiode al loopt. De tool registreert pas recent de voortgang, maar het systeem bestaat al langer. Waarschuw NIET dat de praktijkperiode nog moet starten. Adviseer wél om te controleren of de startdatum aantoonbaar is gedocumenteerd (bijv. beleidsdocumenten, versiehistorie, gespreksverslagen met datum).
+- Baseer risico's en adviezen alleen op de verstrekte projectdata.
+- Wees concreet en praktisch, geen generieke opmerkingen.
+
 Geef: (1) de 3 belangrijkste risico's of aandachtspunten op dit moment,
 (2) de 2 taken die het meeste impact hebben als ze nu worden opgepakt,
 (3) één concreet advies voor de komende week.

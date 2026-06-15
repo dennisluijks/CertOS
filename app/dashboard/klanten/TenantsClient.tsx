@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import type { Tables } from "@/types/database";
 import InvitationsBlock from "./InvitationsBlock";
+import ContactsBlock from "./ContactsBlock";
 
 interface Props {
   workspaceId: string;
@@ -12,14 +13,31 @@ interface Props {
   projectCounts: Record<string, number>;
 }
 
+type ExpandedView = { tenantId: string; tab: "contacten" | "portaal" } | null;
+
 export default function TenantsClient({ workspaceId, initialTenants, projectCounts }: Props) {
   const [tenants, setTenants] = useState(initialTenants);
   const [form, setForm] = useState<null | Partial<Tables<"tenants">>>(null);
-  const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<ExpandedView>(null);
+  const [prefillEmail, setPrefillEmail] = useState("");
   const supabase = createClient();
   const router = useRouter();
 
   const emptyForm = { id: undefined, name: "", contact: "", email: "", sector: "" };
+
+  function toggle(tenantId: string, tab: "contacten" | "portaal") {
+    if (expanded?.tenantId === tenantId && expanded?.tab === tab) {
+      setExpanded(null);
+    } else {
+      setExpanded({ tenantId, tab });
+      if (tab !== "portaal") setPrefillEmail("");
+    }
+  }
+
+  function handleInvite(tenantId: string, email: string) {
+    setPrefillEmail(email);
+    setExpanded({ tenantId, tab: "portaal" });
+  }
 
   async function save() {
     if (!form?.name?.trim()) return;
@@ -98,46 +116,69 @@ export default function TenantsClient({ workspaceId, initialTenants, projectCoun
         </div>
       )}
 
-      {tenants.map(t => (
-        <div key={t.id} style={{ background: "#fff", border: "1px solid var(--color-line)", borderRadius: 10, marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: 16, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 160 }}>
-              <div style={{ fontWeight: 700, fontSize: 14.5 }}>{t.name}</div>
-              <div style={{ color: "var(--color-slate)", fontSize: 12.5, marginTop: 2 }}>
-                {[t.sector, t.contact, t.email].filter(Boolean).join(" · ") || "Geen details"}
+      {tenants.map(t => {
+        const isOpen = expanded?.tenantId === t.id;
+        return (
+          <div key={t.id} style={{ background: "#fff", border: "1px solid var(--color-line)", borderRadius: 10, marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: 16, flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <div style={{ fontWeight: 700, fontSize: 14.5 }}>{t.name}</div>
+                <div style={{ color: "var(--color-slate)", fontSize: 12.5, marginTop: 2 }}>
+                  {[t.sector, t.contact, t.email].filter(Boolean).join(" · ") || "Geen details"}
+                </div>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--color-slate)", display: "block", marginTop: 4 }}>
+                  {projectCounts[t.id] ?? 0} traject{(projectCounts[t.id] ?? 0) === 1 ? "" : "en"}
+                </span>
               </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--color-slate)", display: "block", marginTop: 4 }}>
-                {projectCounts[t.id] ?? 0} traject{(projectCounts[t.id] ?? 0) === 1 ? "" : "en"}
-              </span>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => toggle(t.id, "contacten")}
+                  style={{ background: isOpen && expanded?.tab === "contacten" ? "var(--color-bone)" : "transparent", color: "var(--color-ink)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
+                >
+                  Contactpersonen
+                </button>
+                <button
+                  onClick={() => toggle(t.id, "portaal")}
+                  style={{ background: isOpen && expanded?.tab === "portaal" ? "var(--color-bone)" : "transparent", color: "var(--color-slate)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
+                >
+                  Portaaltoegang
+                </button>
+                <button
+                  onClick={() => setForm({ id: t.id, name: t.name, contact: t.contact ?? "", email: t.email ?? "", sector: t.sector ?? "" })}
+                  style={{ background: "transparent", color: "var(--color-ink)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
+                >
+                  Bewerken
+                </button>
+                <button
+                  onClick={() => deleteTenant(t.id, t.name)}
+                  style={{ background: "transparent", color: "var(--color-red)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
+                >
+                  Verwijderen
+                </button>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button
-                onClick={() => setSelectedTenant(selectedTenant === t.id ? null : t.id)}
-                style={{ background: "transparent", color: "var(--color-slate)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
-              >
-                Portaaltoegang
-              </button>
-              <button
-                onClick={() => setForm({ id: t.id, name: t.name, contact: t.contact ?? "", email: t.email ?? "", sector: t.sector ?? "" })}
-                style={{ background: "transparent", color: "var(--color-ink)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
-              >
-                Bewerken
-              </button>
-              <button
-                onClick={() => deleteTenant(t.id, t.name)}
-                style={{ background: "transparent", color: "var(--color-red)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
-              >
-                Verwijderen
-              </button>
-            </div>
+
+            {isOpen && (
+              <div style={{ borderTop: "1px solid var(--color-line)", padding: 16 }}>
+                {expanded?.tab === "contacten" && (
+                  <ContactsBlock
+                    tenantId={t.id}
+                    workspaceId={workspaceId}
+                    onInvite={(email) => handleInvite(t.id, email)}
+                  />
+                )}
+                {expanded?.tab === "portaal" && (
+                  <InvitationsBlock
+                    tenantId={t.id}
+                    workspaceId={workspaceId}
+                    prefillEmail={prefillEmail}
+                  />
+                )}
+              </div>
+            )}
           </div>
-          {selectedTenant === t.id && (
-            <div style={{ borderTop: "1px solid var(--color-line)", padding: 16 }}>
-              <InvitationsBlock tenantId={t.id} workspaceId={workspaceId} />
-            </div>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

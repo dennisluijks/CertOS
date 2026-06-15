@@ -55,6 +55,7 @@ export default async function TrajectDetailPage({ params }: Props) {
     { data: logEntries },
     { data: expiries },
     { data: tenantMembers },
+    { data: tenantContacts },
   ] = await Promise.all([
     supabase
       .from("phases")
@@ -97,6 +98,11 @@ export default async function TrajectDetailPage({ params }: Props) {
       .from("tenant_members")
       .select("user_id, role, profiles(full_name, email)")
       .eq("tenant_id", project.tenant_id),
+    supabase
+      .from("tenant_contacts")
+      .select("id, name, email")
+      .eq("tenant_id", project.tenant_id)
+      .order("name"),
   ]);
 
   // Fetch tasks for all phases
@@ -125,6 +131,8 @@ export default async function TrajectDetailPage({ params }: Props) {
       expiries={expiries ?? []}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tenantMembers={(tenantMembers ?? []) as any}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tenantContacts={(tenantContacts ?? []) as any}
       coordinatorName={myProfile?.full_name ?? myProfile?.email ?? "Ik"}
     />
   );

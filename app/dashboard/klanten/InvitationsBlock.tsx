@@ -7,12 +7,13 @@ import type { Tables } from "@/types/database";
 interface Props {
   tenantId: string;
   workspaceId: string;
+  prefillEmail?: string;
 }
 
-export default function InvitationsBlock({ tenantId, workspaceId }: Props) {
+export default function InvitationsBlock({ tenantId, workspaceId, prefillEmail }: Props) {
   const [invitations, setInvitations] = useState<Tables<"invitations">[]>([]);
   const [members, setMembers] = useState<{ user_id: string; email: string; full_name: string | null }[]>([]);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefillEmail ?? "");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const supabase = createClient();
