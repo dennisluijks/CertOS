@@ -146,22 +146,22 @@ export default async function DashboardPage() {
 
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
-        <div style={kpiStyle}>
+        <Link href="/dashboard/klanten" style={{ ...kpiStyle, textDecoration: "none", color: "inherit", display: "block" }}>
           <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em" }}>{projects?.length ?? 0}</div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-slate)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>Trajecten</div>
-        </div>
-        <div style={kpiStyle}>
+        </Link>
+        <Link href="/dashboard/actiecentrum" style={{ ...kpiStyle, textDecoration: "none", color: "inherit", display: "block" }}>
           <div style={{ fontSize: 26, fontWeight: 800, color: auditSoon ? "var(--color-amber)" : undefined }}>{auditSoon}</div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-slate)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>Audit &lt; 30 dgn</div>
-        </div>
-        <div style={kpiStyle}>
+        </Link>
+        <Link href="/dashboard/actiecentrum" style={{ ...kpiStyle, textDecoration: "none", color: "inherit", display: "block" }}>
           <div style={{ fontSize: 26, fontWeight: 800, color: overdueCount ? "var(--color-red)" : undefined }}>{overdueCount}</div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-slate)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>Acties over tijd</div>
-        </div>
-        <div style={kpiStyle}>
+        </Link>
+        <Link href="/dashboard/actiecentrum" style={{ ...kpiStyle, textDecoration: "none", color: "inherit", display: "block" }}>
           <div style={{ fontSize: 26, fontWeight: 800, color: expiringSoon ? "var(--color-amber)" : undefined }}>{expiringSoon}</div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-slate)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>Verloopt &lt; 90 dgn</div>
-        </div>
+        </Link>
       </div>
 
       {/* Aandacht nodig */}
