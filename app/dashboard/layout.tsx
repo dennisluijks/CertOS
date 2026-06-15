@@ -35,7 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const unreadCount = activities?.length ?? 0;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-archivo)" }}>
+    <div className="cert-layout">
       <CoordinatorNav
         workspaceName={workspace?.name ?? "CertOS"}
         accentColor={workspace?.accent_color ?? "#21A865"}
@@ -44,13 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userEmail={profile.email}
         userName={profile.full_name}
       />
-      <main style={{
-        flex: 1,
-        padding: "26px 30px",
-        maxWidth: 1140,
-        minHeight: "100vh",
-        background: "var(--color-bone)",
-      }}>
+      <main className="cert-main">
         {children}
       </main>
     </div>

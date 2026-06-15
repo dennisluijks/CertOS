@@ -10,7 +10,7 @@ export const NORM_INFO: Record<Norm, { titel: string; uitleg: string; letop: str
     titel: "VG-Checklist Uitzendorganisaties",
     uitleg: "Veiligheids- en gezondheidsnorm voor uitzend- en detacheringsbureaus die personeel leveren aan VCA-plichtige inleners (bouw, techniek, industrie). Toont aan dat het bureau veiligheid borgt in werving, plaatsing en begeleiding van uitzendkrachten.",
     letop: "Certificaat 3 jaar geldig met jaarlijkse controle-audit. Tekortkomingen binnen 3 maanden herstellen, anders intrekking. Geldt voor uitzenden (inlener heeft gezag/toezicht), niet voor payrolling.",
-    links: [["SSVV (normbeheerder)", "https://www.ssvv.nl"], ["VCA/VCU portaal", "https://www.vca.nl"], ["Centraal Certificatenregister", "https://www.vca.nl"]],
+    links: [["SSVV (normbeheerder)", "https://www.ssvv.nl"], ["VCA/VCU portaal", "https://www.vca.nl"], ["Centraal Diploma Register", "https://www.cdv.nl"]],
   },
   "ISO 9001": {
     titel: "Kwaliteitsmanagement",

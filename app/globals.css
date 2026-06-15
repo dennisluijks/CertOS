@@ -96,7 +96,96 @@ input:focus, select:focus, textarea:focus {
   transition: width 0.3s;
 }
 
-/* Spinner */
+/* ============================================================
+   Responsive layout — dashboard shell
+   ============================================================ */
+
+.cert-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.cert-main {
+  flex: 1;
+  min-width: 0;
+  padding: 26px 30px;
+  background: var(--color-bone);
+}
+
+/* Desktop sidebar */
+.cert-nav {
+  width: 220px;
+  min-width: 220px;
+  min-height: 100vh;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Mobile top bar — hidden on desktop */
+.cert-topbar {
+  display: none;
+}
+
+/* Close button inside slide-out — hidden on desktop */
+.cert-nav-close {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* Stack vertically */
+  .cert-layout {
+    flex-direction: column;
+  }
+
+  /* Slide-out overlay */
+  .cert-nav {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 280px !important;
+    min-width: unset !important;
+    height: 100dvh;
+    min-height: unset !important;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(.4, 0, .2, 1);
+    overflow-y: auto;
+  }
+  .cert-nav.open {
+    transform: translateX(0);
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Mobile top bar */
+  .cert-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+    padding: 0 16px;
+    background: var(--color-navy);
+    border-bottom: 1px solid #24407A;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    flex-shrink: 0;
+  }
+
+  /* Main content below top bar */
+  .cert-main {
+    padding: 16px 16px 40px;
+  }
+
+  /* Close button inside drawer */
+  .cert-nav-close {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 14px 0;
+  }
+}
+
+/* ============================================================
+   Spinner */
 .spin {
   display: inline-block;
   width: 14px;

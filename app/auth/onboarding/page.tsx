@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -12,7 +11,6 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   async function createWorkspace() {
-    const supabase = createClient();
     if (!workspaceName.trim()) {
       setError("Vul een naam in voor je workspace.");
       return;
@@ -20,32 +18,26 @@ export default function OnboardingPage() {
     setLoading(true);
     setError("");
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError("Sessie verlopen. Log opnieuw in."); setLoading(false); return; }
+    try {
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: workspaceName.trim(), accentColor }),
+      });
 
-    const { data: workspace, error: wsErr } = await supabase
-      .from("workspaces")
-      .insert({
-        name: workspaceName.trim(),
-        owner_user_id: user.id,
-        accent_color: accentColor,
-      })
-      .select("id")
-      .single();
+      const data = await res.json();
 
-    if (wsErr || !workspace) {
-      setError("Er ging iets mis. Probeer opnieuw.");
+      if (!res.ok) {
+        setError(data.error ?? "Er ging iets mis.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (e) {
+      setError("Netwerkfout: " + (e as Error).message);
       setLoading(false);
-      return;
     }
-
-    await supabase.from("workspace_members").insert({
-      workspace_id: workspace.id,
-      user_id: user.id,
-      role: "owner",
-    });
-
-    router.push("/dashboard");
   }
 
   return (

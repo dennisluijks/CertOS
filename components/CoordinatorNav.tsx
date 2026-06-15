@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/useLocale";
 import { getTranslations, LOCALE_COOKIE, type Locale } from "@/lib/i18n";
+import { useState, useEffect } from "react";
 
 interface CoordinatorNavProps {
   workspaceName: string;
@@ -61,6 +62,17 @@ const NAV_ITEMS: { href: string; key: NavKey; exact?: boolean; icon: React.React
   )},
 ];
 
+function LogoMark({ accentColor }: { accentColor: string }) {
+  return (
+    <svg width="28" height="32" viewBox="0 0 100 116" fill="none" aria-hidden="true">
+      <path d="M50 5 L89 27 V61 L50 83 L11 61 V27 Z" stroke="#FFFFFF" strokeWidth="9" fill="none" strokeLinejoin="round"/>
+      <path d="M31 42 L46 57 L73 29" stroke={accentColor} strokeWidth="12" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M15 80 L50 98 L85 80" stroke={accentColor} strokeWidth="8" fill="none" strokeLinecap="round"/>
+      <path d="M15 94 L50 112 L85 94" stroke="#FFFFFF" strokeWidth="8" fill="none" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 export default function CoordinatorNav({
   workspaceName,
   accentColor,
@@ -73,6 +85,14 @@ export default function CoordinatorNav({
   const supabase = createClient();
   const { locale, setLocale } = useLocale();
   const t = getTranslations(locale);
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => { setNavOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = navOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [navOpen]);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -90,128 +110,168 @@ export default function CoordinatorNav({
   }
 
   return (
-    <aside style={{
-      width: 220,
-      minWidth: 220,
-      background: "var(--color-navy)",
-      color: "#EAF0FA",
-      display: "flex",
-      flexDirection: "column",
-      minHeight: "100vh",
-    }}>
-      {/* Logo */}
-      <div style={{
-        padding: "20px 20px 18px",
-        borderBottom: "1px solid #24407A",
-        display: "flex",
-        gap: 10,
-        alignItems: "center",
-      }}>
-        <svg width="30" height="35" viewBox="0 0 100 116" fill="none" aria-hidden="true">
-          <path d="M50 5 L89 27 V61 L50 83 L11 61 V27 Z" stroke="#FFFFFF" strokeWidth="9" fill="none" strokeLinejoin="round"/>
-          <path d="M31 42 L46 57 L73 29" stroke={accentColor} strokeWidth="12" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M15 80 L50 98 L85 80" stroke={accentColor} strokeWidth="8" fill="none" strokeLinecap="round"/>
-          <path d="M15 94 L50 112 L85 94" stroke="#FFFFFF" strokeWidth="8" fill="none" strokeLinecap="round"/>
-        </svg>
-        <div>
-          <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.02em" }}>
+    <>
+      {/* Mobile top bar */}
+      <div className="cert-topbar">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <LogoMark accentColor={accentColor} />
+          <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: "-0.02em", color: "#fff" }}>
             Cert<span style={{ color: accentColor }}>OS</span>
-          </div>
-          <div style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 9.5,
-            letterSpacing: "0.14em",
-            color: "#7E93C4",
-            marginTop: 2,
-            textTransform: "uppercase",
-          }}>
-            {workspaceName}
-          </div>
+          </span>
         </div>
+        <button
+          onClick={() => setNavOpen(true)}
+          aria-label="Menu openen"
+          style={{ all: "unset", cursor: "pointer", color: "#EAF0FA", display: "flex", alignItems: "center" }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
       </div>
 
-      {/* Navigatie */}
-      <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-        {NAV_ITEMS.map(item => {
-          const active = isActive(item.href, item.exact);
-          const isActiecentrum = item.key === "actiecentrum";
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "center",
-                padding: "9px 12px",
-                borderRadius: 6,
-                fontSize: 13.5,
-                fontWeight: active ? 600 : 500,
-                color: active ? "#fff" : "#AFC0DE",
-                background: active ? "#22386B" : "transparent",
-                textDecoration: "none",
-                position: "relative",
-              }}
-            >
-              {item.icon}
-              <span style={{ flex: 1 }}>{t.nav[item.key]}</span>
-              {isActiecentrum && unreadActivities > 0 && (
-                <span style={{
-                  background: "#B23A2E",
-                  color: "#fff",
+      {/* Mobile backdrop */}
+      {navOpen && (
+        <div
+          onClick={() => setNavOpen(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 199 }}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`cert-nav${navOpen ? " open" : ""}`}
+        style={{
+          background: "var(--color-navy)",
+          color: "#EAF0FA",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Mobile close button */}
+        <div className="cert-nav-close">
+          <button
+            onClick={() => setNavOpen(false)}
+            aria-label="Menu sluiten"
+            style={{ all: "unset", cursor: "pointer", color: "#7E93C4", fontSize: 20, lineHeight: 1, padding: "2px 6px" }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Logo */}
+        <div style={{
+          padding: "20px 20px 18px",
+          borderBottom: "1px solid #24407A",
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}>
+          <svg width="30" height="35" viewBox="0 0 100 116" fill="none" aria-hidden="true">
+            <path d="M50 5 L89 27 V61 L50 83 L11 61 V27 Z" stroke="#FFFFFF" strokeWidth="9" fill="none" strokeLinejoin="round"/>
+            <path d="M31 42 L46 57 L73 29" stroke={accentColor} strokeWidth="12" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15 80 L50 98 L85 80" stroke={accentColor} strokeWidth="8" fill="none" strokeLinecap="round"/>
+            <path d="M15 94 L50 112 L85 94" stroke="#FFFFFF" strokeWidth="8" fill="none" strokeLinecap="round"/>
+          </svg>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.02em" }}>
+              Cert<span style={{ color: accentColor }}>OS</span>
+            </div>
+            <div style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 9.5,
+              letterSpacing: "0.14em",
+              color: "#7E93C4",
+              marginTop: 2,
+              textTransform: "uppercase",
+            }}>
+              {workspaceName}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigatie */}
+        <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+          {NAV_ITEMS.map(item => {
+            const active = isActive(item.href, item.exact);
+            const isActiecentrum = item.key === "actiecentrum";
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  alignItems: "center",
+                  padding: "9px 12px",
+                  borderRadius: 6,
+                  fontSize: 13.5,
+                  fontWeight: active ? 600 : 500,
+                  color: active ? "#fff" : "#AFC0DE",
+                  background: active ? "#22386B" : "transparent",
+                  textDecoration: "none",
+                  position: "relative",
+                }}
+              >
+                {item.icon}
+                <span style={{ flex: 1 }}>{t.nav[item.key]}</span>
+                {isActiecentrum && unreadActivities > 0 && (
+                  <span style={{
+                    background: "#B23A2E",
+                    color: "#fff",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "1px 6px",
+                    borderRadius: 10,
+                    minWidth: 20,
+                    textAlign: "center",
+                  }}>
+                    {unreadActivities > 99 ? "99+" : unreadActivities}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Gebruiker + taalswitch */}
+        <div style={{ padding: "14px 16px", borderTop: "1px solid #24407A" }}>
+          <div style={{ display: "flex", gap: 2, marginBottom: 10 }}>
+            {(["nl", "en"] as Locale[]).map((l, i) => (
+              <button
+                key={l}
+                onClick={() => switchLocale(l)}
+                style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: 10,
                   fontWeight: 600,
-                  padding: "1px 6px",
-                  borderRadius: 10,
-                  minWidth: 20,
-                  textAlign: "center",
-                }}>
-                  {unreadActivities > 99 ? "99+" : unreadActivities}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Gebruiker + taalswitch */}
-      <div style={{ padding: "14px 16px", borderTop: "1px solid #24407A" }}>
-        {/* Taalswitch */}
-        <div style={{ display: "flex", gap: 2, marginBottom: 10 }}>
-          {(["nl", "en"] as Locale[]).map((l, i) => (
-            <button
-              key={l}
-              onClick={() => switchLocale(l)}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: "0.07em",
-                textTransform: "uppercase",
-                padding: "3px 7px",
-                borderRadius: 4,
-                border: locale === l ? "1.5px solid #7E93C4" : "1.5px solid transparent",
-                background: locale === l ? "#1E3566" : "none",
-                color: locale === l ? "#fff" : "#7E93C4",
-                cursor: "pointer",
-                marginRight: i === 0 ? 2 : 0,
-              }}
-            >
-              {l.toUpperCase()}
-            </button>
-          ))}
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  padding: "3px 7px",
+                  borderRadius: 4,
+                  border: locale === l ? "1.5px solid #7E93C4" : "1.5px solid transparent",
+                  background: locale === l ? "#1E3566" : "none",
+                  color: locale === l ? "#fff" : "#7E93C4",
+                  cursor: "pointer",
+                  marginRight: i === 0 ? 2 : 0,
+                }}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: "#7E93C4", marginBottom: 4, fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {userName ?? userEmail}
+          </div>
+          <button
+            onClick={signOut}
+            style={{ all: "unset", cursor: "pointer", fontSize: 12, color: "#AFC0DE" }}
+          >
+            {t.nav.uitloggen}
+          </button>
         </div>
-        <div style={{ fontSize: 12, color: "#7E93C4", marginBottom: 4, fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {userName ?? userEmail}
-        </div>
-        <button
-          onClick={signOut}
-          style={{ all: "unset", cursor: "pointer", fontSize: 12, color: "#AFC0DE" }}
-        >
-          {t.nav.uitloggen}
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

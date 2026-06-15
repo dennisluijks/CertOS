@@ -40,11 +40,14 @@ export default async function PortalLayout({ children }: { children: React.React
       {/* Portal header */}
       <header style={{
         background: "var(--color-navy)",
-        padding: "0 32px",
-        height: 58,
+        padding: "0 16px",
+        height: 52,
         display: "flex",
         alignItems: "center",
         gap: 14,
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
       }}>
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -72,7 +75,7 @@ export default async function PortalLayout({ children }: { children: React.React
       {/* Portal nav */}
       <PortalNav accentColor={accentColor} />
 
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 16px 40px" }}>
         {children}
       </main>
     </div>
@@ -84,9 +87,10 @@ function PortalNav({ accentColor }: { accentColor: string }) {
     <nav style={{
       background: "#fff",
       borderBottom: "1px solid var(--color-line)",
-      padding: "0 32px",
+      padding: "0 16px",
       display: "flex",
       gap: 0,
+      overflowX: "auto",
     }}>
       {[
         { href: "/portal", label: "Overzicht" },
