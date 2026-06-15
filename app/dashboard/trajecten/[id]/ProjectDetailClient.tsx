@@ -193,11 +193,13 @@ type TabId = (typeof TABS)[number]["id"];
 
 // ─── FasenTab ─────────────────────────────────────────────────────────────────
 
-function FasenTab({ phases, tasks, project, workspace, onRefresh }: {
+function FasenTab({ phases, tasks, project, workspace, tenantContacts, coordinatorName, onRefresh }: {
   phases: Phase[];
   tasks: Task[];
   project: Project;
   workspace: { id: string };
+  tenantContacts: TenantContact[];
+  coordinatorName: string;
   onRefresh: () => void;
 }) {
   const supabase = createClient();
@@ -340,13 +342,17 @@ function FasenTab({ phases, tasks, project, workspace, onRefresh }: {
                       onBlur={e => { if (e.target.value !== task.name) updateTask(task.id, { name: e.target.value }); }}
                       style={{ ...S.input, flex: 1, textDecoration: task.done ? "line-through" : "none", color: task.done ? "var(--color-grey)" : "var(--color-ink)" }}
                     />
-                    <input
-                      type="text"
-                      defaultValue={task.owner}
-                      placeholder="Eigenaar"
-                      onBlur={e => { if (e.target.value !== task.owner) updateTask(task.id, { owner: e.target.value }); }}
-                      style={{ ...S.input, width: 110 }}
-                    />
+                    <select
+                      value={task.owner ?? ""}
+                      onChange={e => updateTask(task.id, { owner: e.target.value })}
+                      style={{ ...S.input, width: 140 }}
+                    >
+                      <option value="">— Eigenaar —</option>
+                      <option value={coordinatorName}>{coordinatorName} (ik)</option>
+                      {tenantContacts.map(c => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
                     <input
                       type="date"
                       defaultValue={task.due ?? ""}
@@ -895,10 +901,11 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
                   />
                 </div>
                 <div>
-                  <label style={S.label as React.CSSProperties}>Bron</label>
+                  <label style={S.label as React.CSSProperties}>Norm/eis</label>
                   <input
                     type="text"
                     defaultValue={f.source ?? ""}
+                    placeholder="bijv. VCU 3.1"
                     onBlur={e => { if (e.target.value !== (f.source ?? "")) updateFinding(f.id, { source: e.target.value || null }); }}
                     style={{ ...S.input, width: "100%" }}
                   />
@@ -958,9 +965,10 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
                   />
                 </div>
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={S.label as React.CSSProperties}>Aantekening</label>
+                  <label style={S.label as React.CSSProperties}>Corrigerende maatregel</label>
                   <textarea
                     defaultValue={f.note}
+                    placeholder="Beschrijf welke actie is of wordt ondernomen…"
                     onBlur={e => { if (e.target.value !== f.note) updateFinding(f.id, { note: e.target.value }); }}
                     rows={2}
                     style={{ ...S.input, width: "100%", resize: "vertical", fontSize: 12.5 }}
@@ -994,10 +1002,12 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
 
 // ─── RisicosTab ───────────────────────────────────────────────────────────────
 
-function RisicosTab({ risks, project, workspace, onRefresh }: {
+function RisicosTab({ risks, project, workspace, tenantContacts, coordinatorName, onRefresh }: {
   risks: Risk[];
   project: Project;
   workspace: { id: string };
+  tenantContacts: TenantContact[];
+  coordinatorName: string;
   onRefresh: () => void;
 }) {
   const supabase = createClient();
@@ -1026,6 +1036,12 @@ function RisicosTab({ risks, project, workspace, onRefresh }: {
     onRefresh();
   }
 
+  async function deleteRisk(id: string) {
+    if (!confirm("Verbeterpunt verwijderen?")) return;
+    await supabase.from("risks").delete().eq("id", id);
+    onRefresh();
+  }
+
   return (
     <div>
       {risks.length === 0 && (
@@ -1035,43 +1051,89 @@ function RisicosTab({ risks, project, workspace, onRefresh }: {
       )}
       {risks.map(r => (
         <div key={r.id} style={S.card}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => cycleStatus(r)}
-              style={{ all: "unset", cursor: "pointer" }}
-            >
-              <Stamp label={RISK_STATUS[r.status]} color={RISK_COLOR[r.status]} />
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => cycleStatus(r)}
+                  style={{ all: "unset", cursor: "pointer" }}
+                >
+                  <Stamp label={RISK_STATUS[r.status]} color={RISK_COLOR[r.status]} />
+                </button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={S.label as React.CSSProperties}>Beschrijving</label>
+                  <textarea
+                    defaultValue={r.description}
+                    onBlur={e => { if (e.target.value !== r.description) updateRisk(r.id, { description: e.target.value }); }}
+                    rows={2}
+                    style={{ ...S.input, width: "100%", resize: "vertical", fontSize: 12.5 }}
+                  />
+                </div>
+                <div>
+                  <label style={S.label as React.CSSProperties}>Toelichting</label>
+                  <textarea
+                    defaultValue={r.impact ?? ""}
+                    onBlur={e => { if (e.target.value !== (r.impact ?? "")) updateRisk(r.id, { impact: e.target.value || null }); }}
+                    rows={2}
+                    style={{ ...S.input, width: "100%", resize: "vertical", fontSize: 12.5 }}
+                  />
+                </div>
+                <div>
+                  <label style={S.label as React.CSSProperties}>Actie</label>
+                  <textarea
+                    defaultValue={r.mitigation ?? ""}
+                    onBlur={e => { if (e.target.value !== (r.mitigation ?? "")) updateRisk(r.id, { mitigation: e.target.value || null }); }}
+                    rows={2}
+                    style={{ ...S.input, width: "100%", resize: "vertical", fontSize: 12.5 }}
+                  />
+                </div>
+                <div>
+                  <label style={S.label as React.CSSProperties}>Bron</label>
+                  <select
+                    value={r.source ?? ""}
+                    onChange={e => updateRisk(r.id, { source: e.target.value || null })}
+                    style={{ ...S.input, width: "100%" }}
+                  >
+                    <option value="">— Bron —</option>
+                    <option value="Intern">Intern</option>
+                    <option value="Interne audit">Interne audit</option>
+                    <option value="Externe audit">Externe audit</option>
+                    <option value="Klacht">Klacht</option>
+                    <option value="Management review">Management review</option>
+                    <option value="Anders">Anders</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={S.label as React.CSSProperties}>Eigenaar</label>
+                  <select
+                    value={r.owner ?? ""}
+                    onChange={e => updateRisk(r.id, { owner: e.target.value || null })}
+                    style={{ ...S.input, width: "100%" }}
+                  >
+                    <option value="">— Kies eigenaar —</option>
+                    <option value={coordinatorName}>{coordinatorName} (ik)</option>
+                    {tenantContacts.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={S.label as React.CSSProperties}>Deadline</label>
+                  <input
+                    type="date"
+                    defaultValue={r.due ?? ""}
+                    onBlur={e => updateRisk(r.id, { due: e.target.value || null })}
+                    style={{ ...S.input, width: "100%" }}
+                  />
+                </div>
+              </div>
+            </div>
+            <button type="button" onClick={() => deleteRisk(r.id)} style={S.btnDanger}>
+              Verwijder
             </button>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <div>
-              <label style={S.label as React.CSSProperties}>Beschrijving</label>
-              <textarea
-                defaultValue={r.description}
-                onBlur={e => { if (e.target.value !== r.description) updateRisk(r.id, { description: e.target.value }); }}
-                rows={2}
-                style={{ ...S.input, width: "100%", resize: "vertical", fontSize: 12.5 }}
-              />
-            </div>
-            <div>
-              <label style={S.label as React.CSSProperties}>Toelichting</label>
-              <textarea
-                defaultValue={r.impact ?? ""}
-                onBlur={e => { if (e.target.value !== (r.impact ?? "")) updateRisk(r.id, { impact: e.target.value || null }); }}
-                rows={2}
-                style={{ ...S.input, width: "100%", resize: "vertical", fontSize: 12.5 }}
-              />
-            </div>
-            <div>
-              <label style={S.label as React.CSSProperties}>Actie</label>
-              <textarea
-                defaultValue={r.mitigation ?? ""}
-                onBlur={e => { if (e.target.value !== (r.mitigation ?? "")) updateRisk(r.id, { mitigation: e.target.value || null }); }}
-                rows={2}
-                style={{ ...S.input, width: "100%", resize: "vertical", fontSize: 12.5 }}
-              />
-            </div>
           </div>
         </div>
       ))}
@@ -1982,7 +2044,7 @@ export default function ProjectDetailClient({
 
       {/* Tab content */}
       {activeTab === "fasen" && (
-        <FasenTab phases={phases} tasks={tasks} project={project} workspace={workspace} onRefresh={refreshPhases} />
+        <FasenTab phases={phases} tasks={tasks} project={project} workspace={workspace} tenantContacts={tenantContacts} coordinatorName={coordinatorName} onRefresh={refreshPhases} />
       )}
       {activeTab === "maatregelen" && (
         <MaatregelenTab controls={controls} project={project} workspace={workspace} tenant={tenant} coordinatorName={coordinatorName} onRefresh={refreshControls} />
@@ -1994,7 +2056,7 @@ export default function ProjectDetailClient({
         <BevindingenTab findings={findings} project={project} workspace={workspace} tenantMembers={tenantMembers} tenantContacts={tenantContacts} coordinatorName={coordinatorName} onRefresh={refreshFindings} />
       )}
       {activeTab === "verbeterpunten" && (
-        <RisicosTab risks={risks} project={project} workspace={workspace} onRefresh={refreshRisks} />
+        <RisicosTab risks={risks} project={project} workspace={workspace} tenantContacts={tenantContacts} coordinatorName={coordinatorName} onRefresh={refreshRisks} />
       )}
       {activeTab === "logboek" && (
         <LogboekTab logEntries={logEntries} project={project} workspace={workspace} onRefresh={refreshLogEntries} />

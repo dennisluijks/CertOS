@@ -289,6 +289,9 @@ export interface Database {
           impact: string | null
           mitigation: string | null
           status: number
+          owner: string | null
+          due: string | null
+          source: string | null
         }
         Insert: {
           id?: string
@@ -298,6 +301,9 @@ export interface Database {
           impact?: string | null
           mitigation?: string | null
           status?: number
+          owner?: string | null
+          due?: string | null
+          source?: string | null
         }
         Update: Partial<Database["public"]["Tables"]["risks"]["Insert"]>
       }
