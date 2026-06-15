@@ -806,6 +806,12 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
 }) {
   const supabase = createClient();
   const [newDesc, setNewDesc] = useState("");
+  const [localF, setLocalF] = useState<Record<string, { severity: string; owner: string }>>(
+    () => Object.fromEntries(findings.map(f => [f.id, { severity: f.severity ?? "", owner: f.owner ?? "" }]))
+  );
+  useEffect(() => {
+    setLocalF(Object.fromEntries(findings.map(f => [f.id, { severity: f.severity ?? "", owner: f.owner ?? "" }])));
+  }, [findings]);
 
   async function addFinding() {
     const desc = newDesc.trim();
@@ -922,8 +928,11 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
                 <div>
                   <label style={S.label as React.CSSProperties}>Type</label>
                   <select
-                    value={f.severity ?? ""}
-                    onChange={e => updateFinding(f.id, { severity: e.target.value || null })}
+                    value={localF[f.id]?.severity ?? ""}
+                    onChange={e => {
+                      setLocalF(prev => ({ ...prev, [f.id]: { ...prev[f.id], severity: e.target.value } }));
+                      updateFinding(f.id, { severity: e.target.value || null });
+                    }}
                     style={{ ...S.input, width: "100%" }}
                   >
                     <option value="">— Type —</option>
@@ -935,8 +944,11 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
                 <div>
                   <label style={S.label as React.CSSProperties}>Eigenaar</label>
                   <select
-                    value={f.owner ?? ""}
-                    onChange={e => updateFinding(f.id, { owner: e.target.value })}
+                    value={localF[f.id]?.owner ?? ""}
+                    onChange={e => {
+                      setLocalF(prev => ({ ...prev, [f.id]: { ...prev[f.id], owner: e.target.value } }));
+                      updateFinding(f.id, { owner: e.target.value });
+                    }}
                     style={{ ...S.input, width: "100%" }}
                   >
                     <option value="">— Kies eigenaar —</option>
@@ -1021,6 +1033,12 @@ function RisicosTab({ risks, project, workspace, tenantContacts, coordinatorName
 }) {
   const supabase = createClient();
   const [newDesc, setNewDesc] = useState("");
+  const [localR, setLocalR] = useState<Record<string, { owner: string; source: string }>>(
+    () => Object.fromEntries(risks.map(r => [r.id, { owner: r.owner ?? "", source: r.source ?? "" }]))
+  );
+  useEffect(() => {
+    setLocalR(Object.fromEntries(risks.map(r => [r.id, { owner: r.owner ?? "", source: r.source ?? "" }])));
+  }, [risks]);
 
   async function addRisk() {
     const desc = newDesc.trim();
@@ -1102,8 +1120,11 @@ function RisicosTab({ risks, project, workspace, tenantContacts, coordinatorName
                 <div>
                   <label style={S.label as React.CSSProperties}>Bron</label>
                   <select
-                    value={r.source ?? ""}
-                    onChange={e => updateRisk(r.id, { source: e.target.value || null })}
+                    value={localR[r.id]?.source ?? ""}
+                    onChange={e => {
+                      setLocalR(prev => ({ ...prev, [r.id]: { ...prev[r.id], source: e.target.value } }));
+                      updateRisk(r.id, { source: e.target.value || null });
+                    }}
                     style={{ ...S.input, width: "100%" }}
                   >
                     <option value="">— Bron —</option>
@@ -1118,8 +1139,11 @@ function RisicosTab({ risks, project, workspace, tenantContacts, coordinatorName
                 <div>
                   <label style={S.label as React.CSSProperties}>Eigenaar</label>
                   <select
-                    value={r.owner ?? ""}
-                    onChange={e => updateRisk(r.id, { owner: e.target.value || null })}
+                    value={localR[r.id]?.owner ?? ""}
+                    onChange={e => {
+                      setLocalR(prev => ({ ...prev, [r.id]: { ...prev[r.id], owner: e.target.value } }));
+                      updateRisk(r.id, { owner: e.target.value || null });
+                    }}
                     style={{ ...S.input, width: "100%" }}
                   >
                     <option value="">— Kies eigenaar —</option>
