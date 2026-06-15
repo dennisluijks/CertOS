@@ -843,8 +843,8 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
   }
 
   const SEVERITY_DEFS = [
-    { label: "Major", bg: "#FDECEA", color: "var(--color-red)", border: "var(--color-red)", desc: "Systematische non-conformiteit — risico voor auditresultaat" },
-    { label: "Minor", bg: "#FEF3E2", color: "var(--color-amber)", border: "var(--color-amber)", desc: "Geïsoleerde afwijking — herstelbaar voor re-audit" },
+    { label: "A-afwijking (Major)", bg: "#FDECEA", color: "var(--color-red)", border: "var(--color-red)", desc: "Systematische non-conformiteit — risico voor auditresultaat" },
+    { label: "B-afwijking (Minor)", bg: "#FEF3E2", color: "var(--color-amber)", border: "var(--color-amber)", desc: "Geïsoleerde afwijking — herstelbaar voor re-audit" },
     { label: "Observatie", bg: "#EAF4FB", color: "var(--color-sky)", border: "var(--color-sky)", desc: "Auditopmerking — geen non-conformiteit" },
   ];
 
@@ -888,11 +888,11 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
                     letterSpacing: "0.06em",
                     padding: "2px 8px",
                     borderRadius: 4,
-                    background: f.severity === "Major" ? "#FDECEA" : f.severity === "Minor" ? "#FEF3E2" : "#EAF4FB",
-                    color: f.severity === "Major" ? "var(--color-red)" : f.severity === "Minor" ? "var(--color-amber)" : "var(--color-sky)",
-                    border: `1.5px solid ${f.severity === "Major" ? "var(--color-red)" : f.severity === "Minor" ? "var(--color-amber)" : "var(--color-sky)"}`,
+                    background: f.severity === "A-afwijking" ? "#FDECEA" : f.severity === "B-afwijking" ? "#FEF3E2" : "#EAF4FB",
+                    color: f.severity === "A-afwijking" ? "var(--color-red)" : f.severity === "B-afwijking" ? "var(--color-amber)" : "var(--color-sky)",
+                    border: `1.5px solid ${f.severity === "A-afwijking" ? "var(--color-red)" : f.severity === "B-afwijking" ? "var(--color-amber)" : "var(--color-sky)"}`,
                   }}>
-                    {f.severity}
+                    {f.severity === "A-afwijking" ? "A-afwijking (Major)" : f.severity === "B-afwijking" ? "B-afwijking (Minor)" : f.severity}
                   </span>
                 )}
                 <button
@@ -936,8 +936,8 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
                     style={{ ...S.input, width: "100%" }}
                   >
                     <option value="">— Type —</option>
-                    <option value="Major">Major</option>
-                    <option value="Minor">Minor</option>
+                    <option value="A-afwijking">A-afwijking (Major)</option>
+                    <option value="B-afwijking">B-afwijking (Minor)</option>
                     <option value="Observatie">Observatie</option>
                   </select>
                 </div>
