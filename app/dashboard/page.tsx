@@ -188,7 +188,7 @@ export default async function DashboardPage() {
               : item.owner ? `${item.owner} (${tenantName})` : tenantName;
             const kc = kindColor(item.kind);
             return (
-              <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderTop: "1px solid #EFF0E9", fontSize: 13 }}>
+              <Link key={k} href={`/dashboard/trajecten/${item.projectId}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", borderTop: "1px solid #EFF0E9", fontSize: 13, textDecoration: "none", color: "inherit" }}>
                 <span style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: 11,
@@ -216,7 +216,7 @@ export default async function DashboardPage() {
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-slate)", flexShrink: 0 }}>
                   {rightLabel}
                 </span>
-              </div>
+              </Link>
             );
           })}
         </div>
