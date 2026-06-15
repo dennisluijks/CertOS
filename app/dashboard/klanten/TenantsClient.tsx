@@ -100,34 +100,36 @@ export default function TenantsClient({ workspaceId, initialTenants, projectCoun
 
       {tenants.map(t => (
         <div key={t.id} style={{ background: "#fff", border: "1px solid var(--color-line)", borderRadius: 10, marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 16 }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: 16, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 160 }}>
               <div style={{ fontWeight: 700, fontSize: 14.5 }}>{t.name}</div>
               <div style={{ color: "var(--color-slate)", fontSize: 12.5, marginTop: 2 }}>
                 {[t.sector, t.contact, t.email].filter(Boolean).join(" · ") || "Geen details"}
               </div>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--color-slate)", display: "block", marginTop: 4 }}>
+                {projectCounts[t.id] ?? 0} traject{(projectCounts[t.id] ?? 0) === 1 ? "" : "en"}
+              </span>
             </div>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--color-slate)" }}>
-              {projectCounts[t.id] ?? 0} traject{(projectCounts[t.id] ?? 0) === 1 ? "" : "en"}
-            </span>
-            <button
-              onClick={() => setSelectedTenant(selectedTenant === t.id ? null : t.id)}
-              style={{ background: "transparent", color: "var(--color-slate)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
-            >
-              Portaaltoegang
-            </button>
-            <button
-              onClick={() => setForm({ id: t.id, name: t.name, contact: t.contact ?? "", email: t.email ?? "", sector: t.sector ?? "" })}
-              style={{ background: "transparent", color: "var(--color-ink)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
-            >
-              Bewerken
-            </button>
-            <button
-              onClick={() => deleteTenant(t.id, t.name)}
-              style={{ background: "transparent", color: "var(--color-red)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
-            >
-              Verwijderen
-            </button>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <button
+                onClick={() => setSelectedTenant(selectedTenant === t.id ? null : t.id)}
+                style={{ background: "transparent", color: "var(--color-slate)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
+              >
+                Portaaltoegang
+              </button>
+              <button
+                onClick={() => setForm({ id: t.id, name: t.name, contact: t.contact ?? "", email: t.email ?? "", sector: t.sector ?? "" })}
+                style={{ background: "transparent", color: "var(--color-ink)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
+              >
+                Bewerken
+              </button>
+              <button
+                onClick={() => deleteTenant(t.id, t.name)}
+                style={{ background: "transparent", color: "var(--color-red)", border: "1px solid var(--color-line)", fontSize: 12, padding: "6px 11px", borderRadius: 7, cursor: "pointer", fontWeight: 500 }}
+              >
+                Verwijderen
+              </button>
+            </div>
           </div>
           {selectedTenant === t.id && (
             <div style={{ borderTop: "1px solid var(--color-line)", padding: 16 }}>

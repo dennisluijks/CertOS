@@ -13,6 +13,12 @@ export default async function TrajectDetailPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const { data: myProfile } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("user_id", user.id)
+    .single();
+
   // Fetch workspace
   const { data: workspace } = await supabase
     .from("workspaces")
@@ -119,6 +125,7 @@ export default async function TrajectDetailPage({ params }: Props) {
       expiries={expiries ?? []}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tenantMembers={(tenantMembers ?? []) as any}
+      coordinatorName={myProfile?.full_name ?? myProfile?.email ?? "Ik"}
     />
   );
 }

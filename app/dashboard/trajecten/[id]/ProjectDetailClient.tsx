@@ -9,7 +9,7 @@ import {
   DOC_STATUS, DOC_COLOR,
   FIND_STATUS, FIND_COLOR,
   RISK_STATUS, RISK_COLOR,
-  HOUR_CATS, EXP_TYPES,
+  // HOUR_CATS, EXP_TYPES, (tabs verborgen)
   GUIDE,
 } from "@/lib/norms";
 
@@ -46,6 +46,7 @@ interface Props {
   logEntries: LogEntry[];
   expiries: Expiry[];
   tenantMembers: TenantMember[];
+  coordinatorName: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -136,21 +137,55 @@ function Stamp({ label, color }: { label: string; color: string }) {
   );
 }
 
+// ─── Markdown renderer (voor AI-output) ───────────────────────────────────────
+
+function renderInlineMd(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) =>
+    p.startsWith("**") && p.endsWith("**") ? <strong key={i}>{p.slice(2, -2)}</strong> : p
+  );
+}
+
+function MarkdownText({ text }: { text: string }) {
+  return (
+    <div style={{ fontSize: 13.5, lineHeight: 1.7, color: "var(--color-ink)" }}>
+      {text.split("\n").map((line, i) => {
+        const t = line.trim();
+        if (!t) return <div key={i} style={{ height: 6 }} />;
+        if (t.startsWith("### ")) return <div key={i} style={{ fontWeight: 700, fontSize: 13, color: "var(--color-navy)", marginTop: 10, marginBottom: 2 }}>{t.slice(4)}</div>;
+        if (t.startsWith("## ")) return <div key={i} style={{ fontWeight: 800, fontSize: 14, color: "var(--color-navy)", marginTop: 14, marginBottom: 4 }}>{t.slice(3)}</div>;
+        if (t.startsWith("# ")) return <div key={i} style={{ fontWeight: 800, fontSize: 15, color: "var(--color-navy)", marginTop: 16, marginBottom: 6 }}>{t.slice(2)}</div>;
+        if (t.startsWith("- ") || t.startsWith("* ")) return (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 2, paddingLeft: 4 }}>
+            <span style={{ color: "var(--color-green)", flexShrink: 0, fontWeight: 700 }}>•</span>
+            <span>{renderInlineMd(t.slice(2))}</span>
+          </div>
+        );
+        const num = t.match(/^(\d+)\.\s/);
+        if (num) return (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4, paddingLeft: 4 }}>
+            <span style={{ color: "var(--color-navy)", fontWeight: 700, minWidth: 18, flexShrink: 0 }}>{num[1]}.</span>
+            <span>{renderInlineMd(t.slice(num[0].length))}</span>
+          </div>
+        );
+        return <div key={i} style={{ marginBottom: 2 }}>{renderInlineMd(t)}</div>;
+      })}
+    </div>
+  );
+}
+
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 const TABS = [
   { id: "fasen", label: "Fasen" },
   { id: "maatregelen", label: "Maatregelen" },
   { id: "documenten", label: "Documenten" },
-  { id: "bevindingen", label: "Bevindingen" },
-  { id: "risicos", label: "Risico's" },
-  { id: "uren", label: "Uren" },
+  { id: "afwijkingen", label: "Afwijkingen" },
+  { id: "verbeterpunten", label: "Verbeterpunten" },
   { id: "logboek", label: "Logboek" },
-  { id: "vervaldata", label: "Vervaldata" },
   { id: "planning", label: "Planning" },
   { id: "ai", label: "AI-coach" },
   { id: "auditmode", label: "Auditmodus" },
-  { id: "update", label: "Snelle update" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -650,10 +685,12 @@ function DocumentenTab({ documents, project, workspace, tenantMembers, onRefresh
 
 // ─── BevindingenTab ───────────────────────────────────────────────────────────
 
-function BevindingenTab({ findings, project, workspace, onRefresh }: {
+function BevindingenTab({ findings, project, workspace, tenantMembers, coordinatorName, onRefresh }: {
   findings: Finding[];
   project: Project;
   workspace: { id: string };
+  tenantMembers: TenantMember[];
+  coordinatorName: string;
   onRefresh: () => void;
 }) {
   const supabase = createClient();
@@ -708,7 +745,18 @@ function BevindingenTab({ findings, project, workspace, onRefresh }: {
                   <Stamp label={FIND_STATUS[f.status]} color={FIND_COLOR[f.status]} />
                 </button>
                 {f.severity && (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--color-slate)" }}>
+                  <span style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: f.severity === "Major" ? "#FDECEA" : f.severity === "Minor" ? "#FEF3E2" : "#EAF4FB",
+                    color: f.severity === "Major" ? "var(--color-red)" : f.severity === "Minor" ? "var(--color-amber)" : "var(--color-sky)",
+                    border: `1.5px solid ${f.severity === "Major" ? "var(--color-red)" : f.severity === "Minor" ? "var(--color-amber)" : "var(--color-sky)"}`,
+                  }}>
                     {f.severity}
                   </span>
                 )}
@@ -742,26 +790,34 @@ function BevindingenTab({ findings, project, workspace, onRefresh }: {
                   />
                 </div>
                 <div>
-                  <label style={S.label as React.CSSProperties}>Ernst</label>
+                  <label style={S.label as React.CSSProperties}>Type</label>
                   <select
                     value={f.severity ?? ""}
                     onChange={e => updateFinding(f.id, { severity: e.target.value || null })}
                     style={{ ...S.input, width: "100%" }}
                   >
-                    <option value="">— Ernst —</option>
-                    <option value="Afwijking">Afwijking</option>
+                    <option value="">— Type —</option>
+                    <option value="Major">Major</option>
+                    <option value="Minor">Minor</option>
                     <option value="Observatie">Observatie</option>
-                    <option value="OFI">OFI</option>
                   </select>
                 </div>
                 <div>
                   <label style={S.label as React.CSSProperties}>Eigenaar</label>
-                  <input
-                    type="text"
-                    defaultValue={f.owner}
-                    onBlur={e => { if (e.target.value !== f.owner) updateFinding(f.id, { owner: e.target.value }); }}
+                  <select
+                    value={f.owner ?? ""}
+                    onChange={e => updateFinding(f.id, { owner: e.target.value })}
                     style={{ ...S.input, width: "100%" }}
-                  />
+                  >
+                    <option value="">— Kies eigenaar —</option>
+                    <option value={coordinatorName}>{coordinatorName} (ik)</option>
+                    {tenantMembers.map(m => {
+                      const name = m.profiles?.full_name ?? m.profiles?.email ?? m.user_id;
+                      return (
+                        <option key={m.user_id} value={name}>{name}</option>
+                      );
+                    })}
+                  </select>
                 </div>
                 <div>
                   <label style={S.label as React.CSSProperties}>Deadline</label>
@@ -804,12 +860,12 @@ function BevindingenTab({ findings, project, workspace, onRefresh }: {
           type="text"
           value={newDesc}
           onChange={e => setNewDesc(e.target.value)}
-          placeholder="Nieuwe bevinding…"
+          placeholder="Nieuwe afwijking…"
           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addFinding(); } }}
           style={{ ...S.input, flex: 1 }}
         />
         <button type="button" onClick={addFinding} style={S.btnGhost}>
-          + Bevinding
+          + Afwijking
         </button>
       </div>
     </div>
@@ -854,7 +910,7 @@ function RisicosTab({ risks, project, workspace, onRefresh }: {
     <div>
       {risks.length === 0 && (
         <div style={{ color: "var(--color-slate)", fontSize: 13.5, padding: "12px 0" }}>
-          Geen risico&apos;s.
+          Geen verbeterpunten.
         </div>
       )}
       {risks.map(r => (
@@ -879,7 +935,7 @@ function RisicosTab({ risks, project, workspace, onRefresh }: {
               />
             </div>
             <div>
-              <label style={S.label as React.CSSProperties}>Impact</label>
+              <label style={S.label as React.CSSProperties}>Toelichting</label>
               <textarea
                 defaultValue={r.impact ?? ""}
                 onBlur={e => { if (e.target.value !== (r.impact ?? "")) updateRisk(r.id, { impact: e.target.value || null }); }}
@@ -888,7 +944,7 @@ function RisicosTab({ risks, project, workspace, onRefresh }: {
               />
             </div>
             <div>
-              <label style={S.label as React.CSSProperties}>Maatregel</label>
+              <label style={S.label as React.CSSProperties}>Actie</label>
               <textarea
                 defaultValue={r.mitigation ?? ""}
                 onBlur={e => { if (e.target.value !== (r.mitigation ?? "")) updateRisk(r.id, { mitigation: e.target.value || null }); }}
@@ -905,154 +961,22 @@ function RisicosTab({ risks, project, workspace, onRefresh }: {
           type="text"
           value={newDesc}
           onChange={e => setNewDesc(e.target.value)}
-          placeholder="Nieuw risico…"
+          placeholder="Nieuw verbeterpunt…"
           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addRisk(); } }}
           style={{ ...S.input, flex: 1 }}
         />
         <button type="button" onClick={addRisk} style={S.btnGhost}>
-          + Risico
+          + Verbeterpunt
         </button>
       </div>
     </div>
   );
 }
 
-// ─── UrenTab ──────────────────────────────────────────────────────────────────
+// ─── UrenTab (verborgen — niet meer in gebruik) ───────────────────────────────
 
-function UrenTab({ hours, project, workspace, onRefresh }: {
-  hours: HourRow[];
-  project: Project;
-  workspace: { id: string };
-  onRefresh: () => void;
-}) {
-  const supabase = createClient();
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [category, setCategory] = useState<string>(HOUR_CATS[0]);
-  const [hoursVal, setHoursVal] = useState("");
-  const [note, setNote] = useState("");
-
-  const totalHours = hours.reduce((s, h) => s + h.hours, 0);
-  const pct = project.budget_max > 0 ? Math.min(100, Math.round((totalHours / project.budget_max) * 100)) : 0;
-  const barColor = pct >= 90 ? "var(--color-red)" : pct >= 70 ? "var(--color-amber)" : "var(--color-green)";
-
-  const byCategory: Record<string, number> = {};
-  for (const h of hours) {
-    byCategory[h.category] = (byCategory[h.category] ?? 0) + h.hours;
-  }
-
-  async function addHours() {
-    const h = parseFloat(hoursVal);
-    if (!h || isNaN(h)) return;
-    await supabase.from("hours").insert({
-      workspace_id: workspace.id,
-      project_id: project.id,
-      date,
-      category,
-      hours: h,
-      note: note || null,
-    });
-    setHoursVal("");
-    setNote("");
-    onRefresh();
-  }
-
-  return (
-    <div>
-      {/* Budget bar */}
-      <div style={S.card}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <span style={{ fontWeight: 600, fontSize: 13.5 }}>Uren verbruikt</span>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
-            {totalHours.toFixed(1)} / {project.budget_max} uur ({pct}%)
-          </span>
-        </div>
-        <div style={{ height: 9, background: "#E7E8E0", borderRadius: 4, overflow: "hidden" }}>
-          <div style={{ width: `${pct}%`, height: "100%", background: barColor, borderRadius: 4, transition: "width 0.4s" }} />
-        </div>
-        <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 10 }}>
-          {Object.entries(byCategory).map(([cat, total]) => (
-            <div key={cat} style={{
-              background: "var(--color-bone)",
-              border: "1px solid var(--color-line)",
-              borderRadius: 7,
-              padding: "5px 12px",
-              fontSize: 12,
-            }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--color-slate)", display: "block" }}>{cat}</span>
-              <span style={{ fontWeight: 600 }}>{total.toFixed(1)}u</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Add hours form */}
-      <div style={S.card}>
-        <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 12 }}>Uren registreren</div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            style={{ ...S.input, width: 140 }}
-          />
-          <select
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-            style={{ ...S.input, flex: 1, minWidth: 160 }}
-          >
-            {HOUR_CATS.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <input
-            type="number"
-            min={0.25}
-            step={0.25}
-            value={hoursVal}
-            onChange={e => setHoursVal(e.target.value)}
-            placeholder="Uren"
-            style={{ ...S.input, width: 80 }}
-          />
-          <input
-            type="text"
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            placeholder="Aantekening (optioneel)"
-            style={{ ...S.input, flex: 1 }}
-          />
-          <button type="button" onClick={addHours} style={S.btnPrimary}>
-            Toevoegen
-          </button>
-        </div>
-      </div>
-
-      {/* Hour entries */}
-      {hours.length === 0 ? (
-        <div style={{ color: "var(--color-slate)", fontSize: 13.5 }}>Nog geen uren geregistreerd.</div>
-      ) : (
-        <div style={S.card}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--color-line)" }}>
-                {["Datum", "Categorie", "Uren", "Aantekening"].map(h => (
-                  <th key={h} style={{ ...S.label, padding: "4px 8px", textAlign: "left" } as React.CSSProperties}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {hours.map(h => (
-                <tr key={h.id} style={{ borderBottom: "1px solid var(--color-line)" }}>
-                  <td style={{ padding: "7px 8px", color: "var(--color-slate)", fontFamily: "var(--font-mono)", fontSize: 11.5 }}>{fmt(h.date)}</td>
-                  <td style={{ padding: "7px 8px" }}>{h.category}</td>
-                  <td style={{ padding: "7px 8px", fontFamily: "var(--font-mono)", fontWeight: 600 }}>{h.hours}u</td>
-                  <td style={{ padding: "7px 8px", color: "var(--color-slate)" }}>{h.note ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function UrenTab(_props: unknown) { return null; }
 
 // ─── LogboekTab ───────────────────────────────────────────────────────────────
 
@@ -1149,112 +1073,10 @@ function LogboekTab({ logEntries, project, workspace, onRefresh }: {
   );
 }
 
-// ─── VervaldataTab ────────────────────────────────────────────────────────────
+// ─── VervaldataTab (verborgen — niet meer in gebruik) ─────────────────────────
 
-function VervaldataTab({ expiries, project, workspace, onRefresh }: {
-  expiries: Expiry[];
-  project: Project;
-  workspace: { id: string };
-  onRefresh: () => void;
-}) {
-  const supabase = createClient();
-  const [newName, setNewName] = useState("");
-  const [newType, setNewType] = useState<string>(EXP_TYPES[0]);
-  const [newHolder, setNewHolder] = useState("");
-  const [newDate, setNewDate] = useState("");
-
-  async function addExpiry() {
-    if (!newName.trim() || !newDate) return;
-    await supabase.from("expiries").insert({
-      workspace_id: workspace.id,
-      project_id: project.id,
-      name: newName.trim(),
-      type: newType,
-      holder: newHolder || null,
-      date: newDate,
-    });
-    setNewName(""); setNewHolder(""); setNewDate("");
-    onRefresh();
-  }
-
-  function expiryColor(d: string) {
-    const days = daysTo(d);
-    if (days === null) return "var(--color-ink)";
-    if (days < 0 || days < 30) return "var(--color-red)";
-    if (days < 90) return "var(--color-amber)";
-    return "var(--color-ink)";
-  }
-
-  return (
-    <div>
-      {expiries.length === 0 && (
-        <div style={{ color: "var(--color-slate)", fontSize: 13.5, padding: "12px 0" }}>
-          Geen vervaldata.
-        </div>
-      )}
-      {expiries.map(e => {
-        const d = daysTo(e.date);
-        const color = expiryColor(e.date);
-        return (
-          <div key={e.id} style={{ ...S.card, borderLeft: `3px solid ${color}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13.5 }}>{e.name}</div>
-                <div style={{ fontSize: 12, color: "var(--color-slate)", marginTop: 2 }}>
-                  {e.type}{e.holder ? ` · ${e.holder}` : ""}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color }}>{fmt(e.date)}</div>
-                {d !== null && (
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color, marginTop: 2 }}>
-                    {d < 0 ? `${-d} dagen geleden verlopen` : d === 0 ? "Verloopt vandaag" : `Nog ${d} dagen`}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      <div style={{ ...S.card, marginTop: 12 }}>
-        <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 12 }}>Vervaldatum toevoegen</div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input
-            type="text"
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            placeholder="Naam"
-            style={{ ...S.input, flex: 1, minWidth: 140 }}
-          />
-          <select
-            value={newType}
-            onChange={e => setNewType(e.target.value)}
-            style={{ ...S.input, width: 150 }}
-          >
-            {EXP_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <input
-            type="text"
-            value={newHolder}
-            onChange={e => setNewHolder(e.target.value)}
-            placeholder="Houder (optioneel)"
-            style={{ ...S.input, width: 140 }}
-          />
-          <input
-            type="date"
-            value={newDate}
-            onChange={e => setNewDate(e.target.value)}
-            style={{ ...S.input, width: 140 }}
-          />
-          <button type="button" onClick={addExpiry} style={S.btnPrimary}>
-            Toevoegen
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function VervaldataTab(_props: unknown) { return null; }
 
 // ─── PlanningTab (Gantt) ──────────────────────────────────────────────────────
 
@@ -1493,7 +1315,7 @@ Fasen: ${phases.map(p => p.name).join(", ")}`;
     setLoading("analysis");
     try {
       const data = await callAI("/api/ai/analyze");
-      setAnalysisResult(data.result ?? data.content ?? JSON.stringify(data));
+      setAnalysisResult(data.text ?? data.result ?? data.content ?? JSON.stringify(data));
     } catch (e) {
       setAnalysisResult(`Fout: ${(e as Error).message}`);
     }
@@ -1504,7 +1326,7 @@ Fasen: ${phases.map(p => p.name).join(", ")}`;
     setLoading("audit");
     try {
       const data = await callAI("/api/ai/audit-prep");
-      setAuditResult(data.result ?? data.content ?? JSON.stringify(data));
+      setAuditResult(data.text ?? data.result ?? data.content ?? JSON.stringify(data));
     } catch (e) {
       setAuditResult(`Fout: ${(e as Error).message}`);
     }
@@ -1639,11 +1461,12 @@ Fasen: ${phases.map(p => p.name).join(", ")}`;
       </div>
 
       {analysisResult && (
+
         <div style={{ ...S.card, borderLeft: "3px solid var(--color-green)" }}>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--color-green)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Voortgangsanalyse
           </div>
-          <p style={{ fontSize: 13.5, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{analysisResult}</p>
+          <MarkdownText text={analysisResult} />
         </div>
       )}
 
@@ -1652,7 +1475,7 @@ Fasen: ${phases.map(p => p.name).join(", ")}`;
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--color-sky)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Auditvoorbereiding
           </div>
-          <p style={{ fontSize: 13.5, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{auditResult}</p>
+          <MarkdownText text={auditResult} />
         </div>
       )}
 
@@ -1838,118 +1661,10 @@ function AuditmodeTab({ controls }: { controls: Control[] }) {
   );
 }
 
-// ─── SnelleUpdateTab ──────────────────────────────────────────────────────────
+// ─── SnelleUpdateTab (verborgen — niet meer in gebruik) ───────────────────────
 
-function SnelleUpdateTab({ project, phases, tasks, tenant }: {
-  project: Project;
-  phases: Phase[];
-  tasks: Task[];
-  tenant: { name: string } | null;
-}) {
-  const [aiResult, setAiResult] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const totalTasks = tasks.length;
-  const doneTasks = tasks.filter(t => t.done).length;
-  const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-  const openTasks = tasks.filter(t => !t.done).slice(0, 3);
-  const d = daysTo(project.audit_date);
-
-  const statusText = `*${tenant?.name ?? "Project"} – ${project.norm} update*
-
-📅 Audit: ${project.audit_date ? (d !== null ? (d >= 0 ? `over ${d} dagen (${fmt(project.audit_date)})` : `${fmt(project.audit_date)} – al geweest`) : fmt(project.audit_date)) : "Nog niet gepland"}
-📊 Voortgang: ${progress}% (${doneTasks}/${totalTasks} taken)
-
-🔔 Top acties:
-${openTasks.map(t => `- ${t.name}${t.due ? ` (voor ${fmt(t.due)})` : ""}`).join("\n") || "- Geen openstaande acties"}`;
-
-  async function generateAI() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/ai/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ summary: statusText, format: "whatsapp" }),
-      });
-      const data = await res.json();
-      setAiResult(data.result ?? data.content ?? "");
-    } catch {
-      setAiResult("Kon AI niet bereiken.");
-    }
-    setLoading(false);
-  }
-
-  async function copyToClipboard(text: string) {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <div>
-      <div style={S.card}>
-        <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 10 }}>WhatsApp statusupdate</div>
-        <pre style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 12,
-          lineHeight: 1.7,
-          whiteSpace: "pre-wrap",
-          background: "var(--color-bone)",
-          padding: 14,
-          borderRadius: 7,
-          marginBottom: 12,
-        }}>
-          {statusText}
-        </pre>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            type="button"
-            onClick={() => copyToClipboard(statusText)}
-            style={S.btnPrimary}
-          >
-            {copied ? "Gekopieerd!" : "Kopieer"}
-          </button>
-          <button
-            type="button"
-            onClick={generateAI}
-            disabled={loading}
-            style={{ ...S.btnGhost, opacity: loading ? 0.7 : 1 }}
-          >
-            {loading ? "Bezig…" : "AI-versie genereren"}
-          </button>
-        </div>
-      </div>
-
-      {aiResult && (
-        <div style={S.card}>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--color-green)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            AI-verbeterde versie
-          </div>
-          <pre style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            lineHeight: 1.7,
-            whiteSpace: "pre-wrap",
-            background: "var(--color-bone)",
-            padding: 14,
-            borderRadius: 7,
-            marginBottom: 12,
-          }}>
-            {aiResult}
-          </pre>
-          <button
-            type="button"
-            onClick={() => copyToClipboard(aiResult)}
-            style={S.btnGhost}
-          >
-            Kopieer AI-versie
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function SnelleUpdateTab(_props: unknown) { return null; }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -1963,10 +1678,11 @@ export default function ProjectDetailClient({
   documents: initialDocuments,
   findings: initialFindings,
   risks: initialRisks,
-  hours: initialHours,
+  hours: _initialHours,
   logEntries: initialLogEntries,
-  expiries: initialExpiries,
+  expiries: _initialExpiries,
   tenantMembers,
+  coordinatorName,
 }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("fasen");
@@ -1982,9 +1698,7 @@ export default function ProjectDetailClient({
   const documents = initialDocuments;
   const findings = initialFindings;
   const risks = initialRisks;
-  const hours = initialHours;
   const logEntries = initialLogEntries;
-  const expiries = initialExpiries;
   const project = initialProject;
 
   const totalTasks = tasks.length;
@@ -2067,8 +1781,8 @@ export default function ProjectDetailClient({
               background: "none",
               border: "none",
               borderBottom: activeTab === tab.id ? "2px solid var(--color-green)" : "2px solid transparent",
-              padding: "9px 14px",
-              fontSize: 13,
+              padding: "11px 16px",
+              fontSize: 14,
               fontWeight: activeTab === tab.id ? 700 : 500,
               color: activeTab === tab.id ? "var(--color-ink)" : "var(--color-slate)",
               cursor: "pointer",
@@ -2091,20 +1805,14 @@ export default function ProjectDetailClient({
       {activeTab === "documenten" && (
         <DocumentenTab documents={documents} project={project} workspace={workspace} tenantMembers={tenantMembers} onRefresh={refresh} />
       )}
-      {activeTab === "bevindingen" && (
-        <BevindingenTab findings={findings} project={project} workspace={workspace} onRefresh={refresh} />
+      {activeTab === "afwijkingen" && (
+        <BevindingenTab findings={findings} project={project} workspace={workspace} tenantMembers={tenantMembers} coordinatorName={coordinatorName} onRefresh={refresh} />
       )}
-      {activeTab === "risicos" && (
+      {activeTab === "verbeterpunten" && (
         <RisicosTab risks={risks} project={project} workspace={workspace} onRefresh={refresh} />
-      )}
-      {activeTab === "uren" && (
-        <UrenTab hours={hours} project={project} workspace={workspace} onRefresh={refresh} />
       )}
       {activeTab === "logboek" && (
         <LogboekTab logEntries={logEntries} project={project} workspace={workspace} onRefresh={refresh} />
-      )}
-      {activeTab === "vervaldata" && (
-        <VervaldataTab expiries={expiries} project={project} workspace={workspace} onRefresh={refresh} />
       )}
       {activeTab === "planning" && (
         <PlanningTab phases={phases} tasks={tasks} project={project} onRefresh={refresh} />
@@ -2123,9 +1831,6 @@ export default function ProjectDetailClient({
       )}
       {activeTab === "auditmode" && (
         <AuditmodeTab controls={controls} />
-      )}
-      {activeTab === "update" && (
-        <SnelleUpdateTab project={project} phases={phases} tasks={tasks} tenant={tenant} />
       )}
     </div>
   );

@@ -141,29 +141,6 @@ export default function InstellingenPage() {
         )}
       </div>
 
-      {/* Plan info */}
-      <div style={{ background: "#fff", border: "1px solid var(--color-line)", borderRadius: 10, padding: 24, marginTop: 12, maxWidth: 560 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>Plan</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            padding: "3px 10px",
-            borderRadius: 4,
-            background: "var(--color-navy-tint)",
-            color: "var(--color-navy)",
-            border: "1.5px solid var(--color-navy)",
-          }}>
-            {workspace.plan.toUpperCase()}
-          </span>
-          <span style={{ fontSize: 13, color: "var(--color-slate)" }}>
-            Betaalde abonnementen worden later beschikbaar.
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
