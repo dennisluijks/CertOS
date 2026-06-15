@@ -401,14 +401,52 @@ function FasenTab({ phases, tasks, project, workspace, onRefresh }: {
 
 // ─── MaatregelenTab ───────────────────────────────────────────────────────────
 
-function MaatregelenTab({ controls, project, workspace, onRefresh }: {
+function MaatregelenTab({ controls, project, workspace, tenant, coordinatorName, onRefresh }: {
   controls: Control[];
   project: Project;
   workspace: { id: string };
+  tenant: { name: string; contact?: string | null } | null;
+  coordinatorName: string;
   onRefresh: () => void;
 }) {
   const supabase = createClient();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [requestText, setRequestText] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  function generateRequest(ctrl: Control, guide: { u: string; v: string[]; b: string[]; q: string }) {
+    const bewijslijst = guide.b.map(b => `- ${b}`).join("\n");
+    const text = [
+      `Betreft: Bewijs aanleveren – ${ctrl.code} ${ctrl.name}`,
+      ``,
+      `Beste${tenant?.contact ? ` ${tenant.contact}` : ""},`,
+      ``,
+      `Voor de certificering van ${tenant?.name ?? "jullie organisatie"} werk ik het onderdeel **${ctrl.code} – ${ctrl.name}** uit. Hiervoor heb ik van jullie kant het volgende bewijs nodig.`,
+      ``,
+      `Wat ik nodig heb:`,
+      bewijslijst,
+      ``,
+      `Achtergrond:`,
+      guide.u,
+      ``,
+      `Ter info: dit is wat de auditor hierover zal vragen:`,
+      `"${guide.q}"`,
+      ``,
+      `Kun je me dit zo snel mogelijk toesturen, zodat we tijdig klaar zijn voor de audit?`,
+      ``,
+      `Met vriendelijke groet,`,
+      coordinatorName,
+    ].join("\n");
+    setRequestText(text);
+    setCopied(false);
+  }
+
+  async function copyText() {
+    if (!requestText) return;
+    await navigator.clipboard.writeText(requestText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   async function cycleStatus(ctrl: Control) {
     const next = ((ctrl.status + 1) % 4) as 0 | 1 | 2 | 3;
@@ -498,6 +536,16 @@ function MaatregelenTab({ controls, project, workspace, onRefresh }: {
                       + Bewijs naar documenten
                     </button>
                   )}
+
+                  {guide && (
+                    <button
+                      type="button"
+                      onClick={() => generateRequest(ctrl, guide)}
+                      style={{ ...S.btnGhost, fontSize: 11.5, padding: "4px 10px" }}
+                    >
+                      Verzoek opstellen
+                    </button>
+                  )}
                 </div>
 
                 {/* Guide panel */}
@@ -555,6 +603,46 @@ function MaatregelenTab({ controls, project, workspace, onRefresh }: {
           </div>
         );
       })}
+
+      {/* Verzoek-modal */}
+      {requestText !== null && (
+        <div
+          onClick={() => setRequestText(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 10, padding: 24, width: "100%", maxWidth: 560, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--color-navy)" }}>Verzoek aan klant</div>
+              <button onClick={() => setRequestText(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--color-slate)", lineHeight: 1 }}>×</button>
+            </div>
+            <textarea
+              readOnly
+              value={requestText}
+              rows={14}
+              style={{ width: "100%", resize: "vertical", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--color-line)", fontSize: 12.5, fontFamily: "var(--font-archivo)", lineHeight: 1.6, boxSizing: "border-box", color: "var(--color-ink)", background: "var(--color-bone)" }}
+              onFocus={e => e.target.select()}
+            />
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <button
+                onClick={copyText}
+                style={{ background: copied ? "var(--color-green)" : "var(--color-navy)", color: "#fff", fontWeight: 600, fontSize: 13, padding: "9px 18px", borderRadius: 7, border: "none", cursor: "pointer", transition: "background 0.2s" }}
+              >
+                {copied ? "Gekopieerd!" : "Kopieer tekst"}
+              </button>
+              <button
+                onClick={() => setRequestText(null)}
+                style={{ background: "transparent", color: "var(--color-ink)", border: "1px solid var(--color-line)", fontWeight: 500, fontSize: 13, padding: "9px 14px", borderRadius: 7, cursor: "pointer" }}
+              >
+                Sluiten
+              </button>
+            </div>
+            <div style={{ marginTop: 10, fontSize: 11.5, color: "var(--color-slate)" }}>Plak dit in Outlook, WhatsApp of een ander kanaal naar keuze.</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -736,7 +824,7 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, tenantCon
   const SEVERITY_DEFS = [
     { label: "Major", bg: "#FDECEA", color: "var(--color-red)", border: "var(--color-red)", desc: "Systematische non-conformiteit — risico voor auditresultaat" },
     { label: "Minor", bg: "#FEF3E2", color: "var(--color-amber)", border: "var(--color-amber)", desc: "Geïsoleerde afwijking — herstelbaar voor re-audit" },
-    { label: "Observatie", bg: "#EAF4FB", color: "var(--color-sky)", border: "var(--color-sky)", desc: "Verbeterpunt — geen non-conformiteit" },
+    { label: "Observatie", bg: "#EAF4FB", color: "var(--color-sky)", border: "var(--color-sky)", desc: "Auditopmerking — geen non-conformiteit" },
   ];
 
   return (
@@ -1897,7 +1985,7 @@ export default function ProjectDetailClient({
         <FasenTab phases={phases} tasks={tasks} project={project} workspace={workspace} onRefresh={refreshPhases} />
       )}
       {activeTab === "maatregelen" && (
-        <MaatregelenTab controls={controls} project={project} workspace={workspace} onRefresh={refreshControls} />
+        <MaatregelenTab controls={controls} project={project} workspace={workspace} tenant={tenant} coordinatorName={coordinatorName} onRefresh={refreshControls} />
       )}
       {activeTab === "documenten" && (
         <DocumentenTab documents={documents} project={project} workspace={workspace} tenantMembers={tenantMembers} onRefresh={refreshDocuments} />
