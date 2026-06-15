@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/database";
@@ -720,7 +720,7 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, coordinat
   }
 
   async function deleteFinding(id: string) {
-    if (!confirm("Bevinding verwijderen?")) return;
+    if (!confirm("Afwijking verwijderen?")) return;
     await supabase.from("findings").delete().eq("id", id);
     onRefresh();
   }
@@ -729,7 +729,7 @@ function BevindingenTab({ findings, project, workspace, tenantMembers, coordinat
     <div>
       {findings.length === 0 && (
         <div style={{ color: "var(--color-slate)", fontSize: 13.5, padding: "12px 0" }}>
-          Geen bevindingen.
+          Geen afwijkingen.
         </div>
       )}
       {findings.map(f => (
@@ -1687,19 +1687,83 @@ export default function ProjectDetailClient({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("fasen");
 
+  // Local state — mutaties updaten dit direct zonder server-roundtrip
+  const [phases, setPhases] = useState(initialPhases);
+  const [tasks, setTasks] = useState(initialTasks);
+  const [controls, setControls] = useState(initialControls);
+  const [documents, setDocuments] = useState(initialDocuments);
+  const [findings, setFindings] = useState(initialFindings);
+  const [risks, setRisks] = useState(initialRisks);
+  const [logEntries, setLogEntries] = useState(initialLogEntries);
+  const [project, setProject] = useState(initialProject);
+
+  // Sync wanneer server nieuwe data stuurt (bijv. na navigatie)
+  useEffect(() => setPhases(initialPhases), [initialPhases]);
+  useEffect(() => setTasks(initialTasks), [initialTasks]);
+  useEffect(() => setControls(initialControls), [initialControls]);
+  useEffect(() => setDocuments(initialDocuments), [initialDocuments]);
+  useEffect(() => setFindings(initialFindings), [initialFindings]);
+  useEffect(() => setRisks(initialRisks), [initialRisks]);
+  useEffect(() => setLogEntries(initialLogEntries), [initialLogEntries]);
+  useEffect(() => setProject(initialProject), [initialProject]);
+
+  const pid = initialProject.id;
+
+  // Gerichte refresh-functies — halen alleen het relevante data type opnieuw op
+  const refreshFindings = useCallback(async () => {
+    const db = createClient();
+    const { data } = await db.from("findings").select("*").eq("project_id", pid);
+    if (data) setFindings(data as Finding[]);
+  }, [pid]);
+
+  const refreshRisks = useCallback(async () => {
+    const db = createClient();
+    const { data } = await db.from("risks").select("*").eq("project_id", pid);
+    if (data) setRisks(data as Risk[]);
+  }, [pid]);
+
+  const refreshTasks = useCallback(async () => {
+    const db = createClient();
+    const phaseIds = phases.map(p => p.id);
+    if (phaseIds.length === 0) return;
+    const { data } = await db.from("tasks").select("*").in("phase_id", phaseIds).order("position");
+    if (data) setTasks(data as Task[]);
+  }, [pid, phases]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const refreshControls = useCallback(async () => {
+    const db = createClient();
+    const { data } = await db.from("controls").select("*").eq("project_id", pid).order("code");
+    if (data) setControls(data as Control[]);
+  }, [pid]);
+
+  const refreshDocuments = useCallback(async () => {
+    const db = createClient();
+    const { data } = await db.from("documents").select("*").eq("project_id", pid);
+    if (data) setDocuments(data as Document[]);
+  }, [pid]);
+
+  const refreshLogEntries = useCallback(async () => {
+    const db = createClient();
+    const { data } = await db.from("log_entries").select("*").eq("project_id", pid).order("date", { ascending: false });
+    if (data) setLogEntries(data as LogEntry[]);
+  }, [pid]);
+
+  const refreshPhases = useCallback(async () => {
+    const db = createClient();
+    const { data } = await db.from("phases").select("*").eq("project_id", pid).order("position");
+    if (data) setPhases(data as Phase[]);
+  }, [pid]);
+
+  const refreshProject = useCallback(async () => {
+    const db = createClient();
+    const { data } = await db.from("projects").select("*").eq("id", pid).single();
+    if (data) setProject(data as Project);
+  }, [pid]);
+
+  // Volledige server refresh — alleen voor AI (raakt meerdere data types)
   const refresh = useCallback(() => {
     router.refresh();
   }, [router]);
-
-  // Use initial data (refresh reloads from server)
-  const phases = initialPhases;
-  const tasks = initialTasks;
-  const controls = initialControls;
-  const documents = initialDocuments;
-  const findings = initialFindings;
-  const risks = initialRisks;
-  const logEntries = initialLogEntries;
-  const project = initialProject;
 
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter(t => t.done).length;
@@ -1797,25 +1861,25 @@ export default function ProjectDetailClient({
 
       {/* Tab content */}
       {activeTab === "fasen" && (
-        <FasenTab phases={phases} tasks={tasks} project={project} workspace={workspace} onRefresh={refresh} />
+        <FasenTab phases={phases} tasks={tasks} project={project} workspace={workspace} onRefresh={refreshPhases} />
       )}
       {activeTab === "maatregelen" && (
-        <MaatregelenTab controls={controls} project={project} workspace={workspace} onRefresh={refresh} />
+        <MaatregelenTab controls={controls} project={project} workspace={workspace} onRefresh={refreshControls} />
       )}
       {activeTab === "documenten" && (
-        <DocumentenTab documents={documents} project={project} workspace={workspace} tenantMembers={tenantMembers} onRefresh={refresh} />
+        <DocumentenTab documents={documents} project={project} workspace={workspace} tenantMembers={tenantMembers} onRefresh={refreshDocuments} />
       )}
       {activeTab === "afwijkingen" && (
-        <BevindingenTab findings={findings} project={project} workspace={workspace} tenantMembers={tenantMembers} coordinatorName={coordinatorName} onRefresh={refresh} />
+        <BevindingenTab findings={findings} project={project} workspace={workspace} tenantMembers={tenantMembers} coordinatorName={coordinatorName} onRefresh={refreshFindings} />
       )}
       {activeTab === "verbeterpunten" && (
-        <RisicosTab risks={risks} project={project} workspace={workspace} onRefresh={refresh} />
+        <RisicosTab risks={risks} project={project} workspace={workspace} onRefresh={refreshRisks} />
       )}
       {activeTab === "logboek" && (
-        <LogboekTab logEntries={logEntries} project={project} workspace={workspace} onRefresh={refresh} />
+        <LogboekTab logEntries={logEntries} project={project} workspace={workspace} onRefresh={refreshLogEntries} />
       )}
       {activeTab === "planning" && (
-        <PlanningTab phases={phases} tasks={tasks} project={project} onRefresh={refresh} />
+        <PlanningTab phases={phases} tasks={tasks} project={project} onRefresh={refreshTasks} />
       )}
       {activeTab === "ai" && (
         <AICoachTab

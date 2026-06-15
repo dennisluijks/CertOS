@@ -45,6 +45,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(appUrl);
   }
 
+  // API routes handle their own auth — skip middleware overhead
+  if (path.startsWith("/api/")) {
+    return supabaseResponse;
+  }
+
   // App domain: run auth logic
   const { data: { user } } = await supabase.auth.getUser();
 
