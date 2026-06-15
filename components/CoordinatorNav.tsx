@@ -160,12 +160,14 @@ export default function CoordinatorNav({
         </div>
 
         {/* Logo */}
-        <div style={{
+        <Link href="/dashboard" style={{
           padding: "20px 20px 18px",
           borderBottom: "1px solid #24407A",
           display: "flex",
           gap: 10,
           alignItems: "center",
+          textDecoration: "none",
+          color: "inherit",
         }}>
           <svg width="30" height="35" viewBox="0 0 100 116" fill="none" aria-hidden="true">
             <path d="M50 5 L89 27 V61 L50 83 L11 61 V27 Z" stroke="#FFFFFF" strokeWidth="9" fill="none" strokeLinejoin="round"/>
@@ -188,7 +190,7 @@ export default function CoordinatorNav({
               {workspaceName}
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Navigatie */}
         <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
