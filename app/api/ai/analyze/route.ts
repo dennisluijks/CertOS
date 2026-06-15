@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Verzoek te groot" }, { status: 413 });
   }
   const body = JSON.parse(rawBody);
-  const { projectSummary } = body;
+  const { summary } = body;
 
-  if (!projectSummary) {
+  if (!summary) {
     return Response.json({ error: "Geen projectsamenvatting" }, { status: 400 });
   }
 
@@ -37,7 +37,7 @@ Geef: (1) de 3 belangrijkste risico's of aandachtspunten op dit moment,
 (3) één concreet advies voor de komende week.
 
 Projectdata:
-${JSON.stringify(projectSummary, null, 2)}`,
+${summary}`,
       }],
     });
 

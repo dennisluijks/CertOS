@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Verzoek te groot" }, { status: 413 });
   }
   const body = JSON.parse(rawBody);
-  const { projectSummary } = body;
+  const { summary } = body;
 
-  if (!projectSummary) {
+  if (!summary) {
     return Response.json({ error: "Geen projectsamenvatting" }, { status: 400 });
   }
 
@@ -37,7 +37,7 @@ Gebaseerd op de projectdata: (1) welke maatregelen zijn nog niet aantoonbaar maa
 (4) wat er in de laatste week voor de audit nog geregeld moet worden.
 
 Projectdata:
-${JSON.stringify(projectSummary, null, 2)}`,
+${summary}`,
       }],
     });
 

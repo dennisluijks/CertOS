@@ -1454,10 +1454,12 @@ function AICoachTab({ project, phases, tasks, controls, documents, findings, ten
   const [loading, setLoading] = useState<string | null>(null);
   const [meetingNotes, setMeetingNotes] = useState("");
   const [aiResponse, setAiResponse] = useState<{
-    tasks_to_create?: { name: string; phase_name?: string }[];
-    tasks_to_update?: { name: string; done?: boolean; owner?: string }[];
+    tasks_to_create?: { name: string; owner?: string; due?: string | null; phase_name?: string }[];
+    tasks_to_complete?: string[];
+    status_updates?: { control_code: string; new_status: 0 | 1 | 2 | 3; note: string }[];
+    audit_date?: string | null;
     log_entry?: string;
-    status_updates?: { description: string; field: string; value: string }[];
+    summary?: string;
   } | null>(null);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
@@ -1517,7 +1519,14 @@ Fasen: ${phases.map(p => p.name).join(", ")}`;
     try {
       const data = await callAI("/api/ai/process-notes", {
         notes: meetingNotes,
-        project_context: projectSummary,
+        project_context: {
+          norm: project.norm,
+          tenant: tenant?.name ?? "Onbekend",
+          currentPhase: phases[0]?.name ?? "onbekend",
+          auditDate: project.audit_date ?? null,
+          openTasks: tasks.filter(t => !t.done).map(t => t.name),
+          controls: controls.map(c => ({ code: c.code, name: c.name, status: c.status })),
+        },
       });
       setAiResponse(data);
     } catch (e) {
@@ -1552,17 +1561,29 @@ Fasen: ${phases.map(p => p.name).join(", ")}`;
       }
     }
 
-    // Update tasks
-    if (aiResponse.tasks_to_update) {
-      for (const t of aiResponse.tasks_to_update) {
-        const match = tasks.find(tk => tk.name.toLowerCase().includes(t.name.toLowerCase()));
+    // Complete tasks
+    if (aiResponse.tasks_to_complete) {
+      for (const name of aiResponse.tasks_to_complete) {
+        const match = tasks.find(tk => tk.name.toLowerCase().includes(name.toLowerCase()));
         if (match) {
-          const updates: Partial<Task> = {};
-          if (t.done !== undefined) updates.done = t.done;
-          if (t.owner) updates.owner = t.owner;
-          await supabase.from("tasks").update(updates).eq("id", match.id);
+          await supabase.from("tasks").update({ done: true }).eq("id", match.id);
         }
       }
+    }
+
+    // Update control statuses
+    if (aiResponse.status_updates) {
+      for (const u of aiResponse.status_updates) {
+        const match = controls.find(c => c.code === u.control_code);
+        if (match) {
+          await supabase.from("controls").update({ status: u.new_status }).eq("id", match.id);
+        }
+      }
+    }
+
+    // Update audit date
+    if (aiResponse.audit_date) {
+      await supabase.from("projects").update({ audit_date: aiResponse.audit_date }).eq("id", project.id);
     }
 
     // Log entry
@@ -1674,14 +1695,32 @@ Fasen: ${phases.map(p => p.name).join(", ")}`;
             </div>
           )}
 
-          {aiResponse.tasks_to_update && aiResponse.tasks_to_update.length > 0 && (
+          {aiResponse.tasks_to_complete && aiResponse.tasks_to_complete.length > 0 && (
             <div style={{ marginBottom: 12 }}>
-              <div style={S.label as React.CSSProperties}>Taakupdates ({aiResponse.tasks_to_update.length})</div>
+              <div style={S.label as React.CSSProperties}>Taken afgerond ({aiResponse.tasks_to_complete.length})</div>
               <ul style={{ paddingLeft: 18, fontSize: 13 }}>
-                {aiResponse.tasks_to_update.map((t, i) => (
-                  <li key={i}>{t.name}{t.done ? " → afgerond" : ""}{t.owner ? ` → eigenaar: ${t.owner}` : ""}</li>
+                {aiResponse.tasks_to_complete.map((name, i) => (
+                  <li key={i}>{name} → afgerond</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {aiResponse.status_updates && aiResponse.status_updates.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={S.label as React.CSSProperties}>Maatregelstatussen ({aiResponse.status_updates.length})</div>
+              <ul style={{ paddingLeft: 18, fontSize: 13 }}>
+                {aiResponse.status_updates.map((u, i) => (
+                  <li key={i}>{u.control_code} → {["Niet gestart","In uitvoering","Geïmplementeerd","Aantoonbaar"][u.new_status]}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {aiResponse.audit_date && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={S.label as React.CSSProperties}>Auditdatum</div>
+              <p style={{ fontSize: 13 }}>Wordt bijgewerkt naar <b>{aiResponse.audit_date}</b></p>
             </div>
           )}
 
